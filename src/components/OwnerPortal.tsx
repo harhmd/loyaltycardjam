@@ -3,42 +3,36 @@ import { Member, Seller, Transaction, ReimbursementClaim } from '../types';
 import confetti from 'canvas-confetti';
 import {
   LayoutGrid,
+  ShoppingBag,
+  Sparkles,
+  BarChart2,
+  MessageSquare,
+  Headphones,
+  Settings,
+  Search,
+  Bell,
+  Mail,
+  ChevronDown,
+  ArrowUpRight,
+  MoreHorizontal,
+  Clock,
   Gift,
   Coins,
   Users,
   Store,
   ShieldCheck,
   CheckCircle2,
-  TrendingDown,
-  TrendingUp,
-  Zap,
-  Sparkles,
-  Calendar,
-  Clock,
   AlertTriangle,
   RotateCcw,
   Smartphone,
   ArrowRightLeft,
-  FileText,
-  Search,
-  Filter,
+  Calendar,
+  ExternalLink,
   Check,
+  PanelLeftClose,
   ChevronRight,
-  UserCheck,
-  MoreHorizontal,
-  Tag,
-  Paperclip,
-  ArrowLeft,
-  ArrowRight,
-  MessageSquare,
-  Send,
-  Bell,
-  BellOff,
-  Smile,
-  Image as ImageIcon,
-  File as FileIcon,
-  Download,
-  ExternalLink
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react';
 
 interface OwnerPortalProps {
@@ -71,15 +65,16 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   onSwitchView,
   onResetData,
 }) => {
-  // Navigation Tabs in Blue Ribbon
-  const [activeTab, setActiveTab] = useState<
-    'BOARD' | 'OVERVIEW' | 'GRANT' | 'EXPIRY' | 'CLAIMS' | 'MEMBERS' | 'AUDIT'
-  >('BOARD');
+  // Active Navigation in Visualboard Left Sidebar
+  const [activeNav, setActiveNav] = useState<
+    'DASHBOARD' | 'ORDERS' | 'PRODUCTS' | 'ANALYTICS' | 'MESSAGES' | 'SUPPORT' | 'SETTINGS'
+  >('DASHBOARD');
 
-  // Selected Campaign in Left Secondary Sidebar
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('CMP-01');
+  // Form states for Grant Points Modal / Panel
+  const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
+  const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
+  const [isClaimsModalOpen, setIsClaimsModalOpen] = useState(false);
 
-  // Form states for Grant Points
   const [grantTarget, setGrantTarget] = useState<'ALL' | string>('ALL');
   const [amountRM, setAmountRM] = useState<string>('10.00');
   const [campaignName, setCampaignName] = useState<string>(
@@ -91,55 +86,6 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   const [selectedMemberToExtend, setSelectedMemberToExtend] = useState<string>('');
   const [customExtendDate, setCustomExtendDate] = useState<string>('2026-11-15 18:00');
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Interactive Checklist states for Glendale Board View
-  const [checklist, setChecklist] = useState<{ id: string; text: string; done: boolean }[]>([
-    { id: '1', text: 'Agihan Subsidi RM 10.00 (1,000 Mata per Ahli)', done: true },
-    { id: '2', text: 'Penetapan Had Tempoh Luput (08 Nov 2026, 18:00)', done: true },
-    { id: '3', text: 'Imbasan Kamera Kod QR Meja Gerai Diaktifkan', done: true },
-    { id: '4', text: 'Semakan & Kelulusan Tuntutan Bayaran Balik Peniaga', done: false },
-    { id: '5', text: 'Pelupusan Automatik Mata Baki Melepasi Had Masa', done: false },
-  ]);
-
-  // Quick note / comment input
-  const [newComment, setNewComment] = useState<string>('');
-  const [customAuditNotes, setCustomAuditNotes] = useState<
-    { author: string; time: string; text: string; avatarColor: string }[]
-  >([
-    {
-      author: 'Gilbert Oliver (Ketua Penyelaras)',
-      time: '01:30AM • 04/11/26',
-      text: 'Sila pastikan semua baki mata subsidi disemak sebelum tarikh had masa 8 Nov 2026 untuk mengelakkan ketirisan dana.',
-      avatarColor: 'bg-indigo-600',
-    },
-    {
-      author: 'Gabriel Lam (Urusetia Tapak)',
-      time: '01:35AM • 04/11/26',
-      text: 'Standee kod QR gerai ayam segar dan sayur telah dipasang. Penebusan mata berjalan lancar!',
-      avatarColor: 'bg-emerald-600',
-    },
-  ]);
-
-  const toggleChecklist = (id: string) => {
-    setChecklist((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, done: !item.done } : item))
-    );
-  };
-
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    setCustomAuditNotes((prev) => [
-      ...prev,
-      {
-        author: 'Pengarah Jualan Agro MADANI',
-        time: 'Baru sebentar tadi',
-        text: newComment,
-        avatarColor: 'bg-blue-600',
-      },
-    ]);
-    setNewComment('');
-  };
 
   const parsedAmountRM = parseFloat(amountRM) || 0;
   const pointsPerPerson = Math.round(parsedAmountRM * 100);
@@ -184,7 +130,10 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
       )}) kepada ${totalTargetCount} ahli! Sah sehingga: ${expiryDate}.`
     );
 
-    setTimeout(() => setGrantSuccessMsg(''), 5000);
+    setTimeout(() => {
+      setGrantSuccessMsg('');
+      setIsGrantModalOpen(false);
+    }, 4000);
   };
 
   const handleExpireAll = () => {
@@ -211,1291 +160,1119 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
     setTimeout(() => setExpirySuccessMsg(''), 4000);
   };
 
-  const setPreset = (rm: number, name: string, expiry: string) => {
-    setAmountRM(rm.toFixed(2));
-    setCampaignName(name);
-    setExpiryDate(expiry);
-  };
-
-  // Campaigns list for the secondary sidebar
-  const CAMPAIGNS = [
+  // Products Table Data matching reference layout
+  const PRODUCT_ROWS = [
     {
-      id: 'CMP-01',
-      title: 'Pasar Tani Mega Putrajaya',
-      date: '08 Nov 2026',
-      sub: 'Peruntukan RM 15.00',
-      thumbnail: '/jam-card-luxury.jpg',
-      badge: 'AKTIF',
+      id: '1',
+      name: 'Ayam Segar Bismi',
+      sub: 'Zon Unggas & Daging • Gerai Pak Ali',
+      image: '/ayam_segar.png',
+      stocks: '12,245 ekor',
+      price: 'RM 12.00',
+      sales: '8,983',
+      earnings: 'RM 107,796.00',
+      growth: '+8.32%',
     },
     {
-      id: 'CMP-02',
-      title: 'Jualan Agro MADANI Selayang',
-      date: '15 Nov 2026',
-      sub: 'Ayam Segar & Telur',
-      thumbnail: '/ayam_segar.png',
-      badge: 'AKAN DATANG',
+      id: '2',
+      name: 'Telur Ayam Gred A',
+      sub: 'Zon Telur & Runcit • Gerai Cikgu Samad',
+      image: '/telur_ayam.png',
+      stocks: '8,463 papan',
+      price: 'RM 14.00',
+      sales: '1,293',
+      earnings: 'RM 18,102.00',
+      growth: '+8.32%',
     },
     {
-      id: 'CMP-03',
-      title: 'Karnival Rahmah Agro Johor',
-      date: '30 Nov 2026',
-      sub: 'Buah & Keperluan Asas',
-      thumbnail: '/buah_tempatan.png',
-      badge: 'BULANAN',
+      id: '3',
+      name: 'Nenas MD2 & Buah Tempatan',
+      sub: 'Zon Buah Tropika • Gerai Kak Som',
+      image: '/buah_tempatan.png',
+      stocks: '24,432 kg',
+      price: 'RM 8.00',
+      sales: '4,425',
+      earnings: 'RM 35,400.00',
+      growth: '+8.32%',
     },
     {
-      id: 'CMP-04',
-      title: 'Pasar Komuniti Desa Pandan',
-      date: '05 Dis 2026',
-      sub: 'Sayur Segar Kampung',
-      thumbnail: '/sayur_kampung.png',
-      badge: 'PERANCANGAN',
+      id: '4',
+      name: 'Sayur Kampung Segar',
+      sub: 'Zon Hasil Tani Hijau • Gerai Mak Jah',
+      image: '/sayur_kampung.png',
+      stocks: '19,498 ikat',
+      price: 'RM 5.00',
+      sales: '6,392',
+      earnings: 'RM 31,960.00',
+      growth: '+8.32%',
     },
   ];
 
   return (
-    <div className="bg-[#e9edf5] p-2 sm:p-5 rounded-[36px] shadow-2xl border border-slate-300/80 font-sans select-none">
+    <div className="bg-[#f2f5f3] min-h-[920px] p-2 sm:p-5 rounded-[40px] text-slate-800 font-sans select-none border border-slate-200/80 shadow-2xl">
       
-      {/* 🌟 MAIN GLENDALE APPLICATION WINDOW */}
-      <div className="bg-white rounded-[28px] shadow-xl overflow-hidden border border-slate-200/90 flex flex-col min-h-[820px]">
+      {/* 🌟 2-COLUMN VISUALBOARD SHELL */}
+      <div className="bg-[#f6f8f7] rounded-[36px] overflow-hidden flex flex-col lg:flex-row min-h-[880px] border border-white shadow-sm">
         
-        {/* Top Window Strip with Mac Traffic Lights */}
-        <div className="bg-white px-4 py-2 border-b border-slate-100 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#ff5f56] inline-block shadow-2xs"></span>
-            <span className="w-3 h-3 rounded-full bg-[#ffbd2e] inline-block shadow-2xs"></span>
-            <span className="w-3 h-3 rounded-full bg-[#27c93f] inline-block shadow-2xs"></span>
-            <span className="ml-3 text-[11px] font-bold text-slate-600 hidden sm:inline">
-              JAM Loyalty Card Dashboard • Sistem Pengurusan Subsidi Agro MADANI
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
-            <span className="hidden md:inline">1 Mata = 1 Sen (RM 0.01)</span>
-            <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
-              Versi Rasmi
-            </span>
-          </div>
-        </div>
-
-        {/* 🌟 3-COLUMN GLENDALE WORKSPACE LAYOUT */}
-        <div className="flex-1 flex flex-row overflow-hidden">
+        {/* ======================================================== */}
+        {/* 1. LEFT SIDEBAR (VISUALBOARD NAVIGATION)                 */}
+        {/* ======================================================== */}
+        <aside className="w-full lg:w-[240px] bg-white border-r border-slate-200/80 p-5 flex flex-col shrink-0 space-y-6">
           
-          {/* ======================================================== */}
-          {/* 1. LEFTMOST DEEP ROYAL BLUE STRIP (WITH LIQUID CURVED NOTCH) */}
-          {/* ======================================================== */}
-          <aside className="w-[62px] sm:w-[72px] bg-[#0c4ec5] text-white flex flex-col items-center py-5 shrink-0 relative z-20 select-none">
-            
-            {/* Top Orange Circle Avatar (OS / Logo) */}
-            <div className="w-10 h-10 rounded-full bg-[#ff6b4a] text-white font-black text-xs flex items-center justify-center shadow-md mb-6 cursor-pointer hover:scale-105 transition">
-              JAM
-            </div>
-
-            {/* Vertical App / Mode Icons Stack */}
-            <div className="flex-1 flex flex-col items-center gap-4 w-full">
-              
-              {/* ACTIVE NOTCHED BUTTON: DASHBOARD (BLUE MESSENGER ICON ON WHITE CIRCLE) */}
-              <div className="relative w-full flex items-center justify-center py-1">
-                
-                {/* SVG Liquid Inward Curve Notch (Top) */}
-                <div className="absolute right-0 -top-4 w-4 h-4 pointer-events-none text-[#f6f8fc]">
-                  <svg viewBox="0 0 16 16" className="w-full h-full" fill="currentColor">
-                    <path d="M16,0 C16,8.837 8.837,16 0,16 L16,16 Z" />
-                  </svg>
-                </div>
-
-                {/* The Active Cutout Background connecting to Secondary Panel */}
-                <div className="absolute right-0 top-0 bottom-0 w-full bg-[#f6f8fc] rounded-l-full"></div>
-
-                {/* SVG Liquid Inward Curve Notch (Bottom) */}
-                <div className="absolute right-0 -bottom-4 w-4 h-4 pointer-events-none text-[#f6f8fc]">
-                  <svg viewBox="0 0 16 16" className="w-full h-full" fill="currentColor">
-                    <path d="M16,16 C16,7.163 8.837,0 0,0 L16,16 Z" />
-                  </svg>
-                </div>
-
-                {/* The Active Icon Circle */}
-                <button
-                  onClick={() => setActiveTab('BOARD')}
-                  title="Dashboard Papan Kawalan (Glendale View)"
-                  className="w-10 h-10 rounded-full bg-[#1660eb] text-white flex items-center justify-center shadow-md relative z-10 hover:scale-105 transition cursor-pointer"
-                >
-                  <MessageSquare className="w-5 h-5 fill-current" />
-                </button>
-              </div>
-
-              {/* Second Mode: Black Circle Icon (Ahli / Pembeli) */}
-              <button
-                onClick={() => onSwitchView && onSwitchView('BUYER')}
-                title="Tukar ke Paparan Telefon Pembeli (Ahli)"
-                className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center hover:scale-105 transition cursor-pointer shadow-sm"
-              >
-                <Smartphone className="w-4 h-4" />
-              </button>
-
-              {/* Third Mode: Green Circle Icon (Gerai Peniaga) */}
-              <button
-                onClick={() => onSwitchView && onSwitchView('SELLER')}
-                title="Tukar ke Terminal Standee Peniaga Gerai"
-                className="w-9 h-9 rounded-full bg-[#16a34a] text-white flex items-center justify-center hover:scale-105 transition cursor-pointer shadow-sm"
-              >
-                <Store className="w-4 h-4" />
-              </button>
-
-              {/* Fourth Mode: Split Simulation Shortcut */}
-              <button
-                onClick={() => onSwitchView && onSwitchView('SPLIT')}
-                title="Tukar ke Simulasi Serentak (Split View)"
-                className="w-9 h-9 rounded-full bg-white/20 text-white hover:bg-white/30 flex items-center justify-center hover:scale-105 transition cursor-pointer"
-              >
-                <ArrowRightLeft className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Bottom Actions: Reset Data Button */}
-            {onResetData && (
-              <button
-                onClick={onResetData}
-                title="Set Semula Data Contoh"
-                className="w-9 h-9 rounded-full bg-white/15 text-white/80 hover:text-white hover:bg-white/25 flex items-center justify-center transition cursor-pointer mt-auto"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            )}
-          </aside>
-
-          {/* ======================================================== */}
-          {/* 2. SECONDARY SIDEBAR: CAMPAIGN / PROJECT LIST COLUMN */}
-          {/* ======================================================== */}
-          <div className="w-[200px] sm:w-[230px] bg-[#f6f8fc] border-r border-slate-200/80 flex flex-col shrink-0 p-3.5 space-y-4">
-            
-            {/* Team / Organization Header Switcher */}
-            <div>
-              <div className="flex items-center justify-between cursor-pointer">
-                <h3 className="font-black text-slate-800 text-xs sm:text-sm tracking-tight flex items-center gap-1">
-                  Urusetia JAM <span className="text-[10px] text-slate-400">▾</span>
-                </h3>
-              </div>
-              <p className="text-[10px] text-slate-400 truncate">
-                admin@jualanagromadani.gov.my
-              </p>
-
-              {/* Status Row: Do not Disturb / Active Market */}
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 text-[10px] text-slate-500 font-bold">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Status Pasar: ON
-                </span>
-                <Bell className="w-3.5 h-3.5 text-slate-400" />
-              </div>
-            </div>
-
-            {/* Campaign Cards Stack (Glendale Style) */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5">
-              {CAMPAIGNS.map((cmp) => {
-                const isSelected = selectedCampaignId === cmp.id;
-                return (
-                  <div
-                    key={cmp.id}
-                    onClick={() => setSelectedCampaignId(cmp.id)}
-                    className={`rounded-2xl p-2.5 border transition cursor-pointer relative overflow-hidden group ${
-                      isSelected
-                        ? 'bg-[#1b63eb] text-white border-blue-600 shadow-md'
-                        : 'bg-white text-slate-700 border-slate-200/80 hover:border-blue-300 hover:shadow-xs'
-                    }`}
-                  >
-                    {/* Thumbnail Preview Banner */}
-                    <div className="w-full h-16 rounded-xl overflow-hidden mb-2 relative bg-slate-100">
-                      <img
-                        src={cmp.thumbnail}
-                        alt={cmp.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <span
-                        className={`absolute top-1 right-1 text-[8px] font-black px-1.5 py-0.2 rounded-md uppercase tracking-wider ${
-                          isSelected
-                            ? 'bg-black/60 text-white'
-                            : 'bg-blue-600 text-white'
-                        }`}
-                      >
-                        {cmp.badge}
-                      </span>
-                    </div>
-
-                    {/* Card Title & Date */}
-                    <h4
-                      className={`text-xs font-black truncate leading-tight ${
-                        isSelected ? 'text-white' : 'text-slate-800'
-                      }`}
-                    >
-                      {cmp.title}
-                    </h4>
-                    <p
-                      className={`text-[10px] mt-0.5 ${
-                        isSelected ? 'text-blue-100' : 'text-slate-400'
-                      }`}
-                    >
-                      {cmp.date} • {cmp.sub}
-                    </p>
-
-                    {/* Overlapping Member Avatars + Three Dots */}
-                    <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-white/20">
-                      <div className="flex items-center -space-x-1.5">
-                        <div className="w-5 h-5 rounded-full bg-amber-400 border border-white flex items-center justify-center text-[8px] font-black text-slate-900">
-                          PR
-                        </div>
-                        <div className="w-5 h-5 rounded-full bg-blue-400 border border-white flex items-center justify-center text-[8px] font-black text-white">
-                          SH
-                        </div>
-                        <div className="w-5 h-5 rounded-full bg-emerald-400 border border-white flex items-center justify-center text-[8px] font-black text-slate-900">
-                          SR
-                        </div>
-                      </div>
-
-                      <MoreHorizontal
-                        className={`w-3.5 h-3.5 ${
-                          isSelected ? 'text-white' : 'text-slate-400'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ======================================================== */}
-          {/* 3. MAIN WORKSPACE AREA (SEARCH, BLUE RIBBON, BOARD VIEW) */}
-          {/* ======================================================== */}
-          <div className="flex-1 flex flex-col min-w-0 bg-[#f4f7fb] overflow-y-auto">
-            
-            {/* Top Search Bar with Glendale Logo / JAM Branding */}
-            <div className="bg-white px-5 py-3 border-b border-slate-200/70 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 flex-1 max-w-lg">
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Cari ahli, no. kad JAM, gerai peniaga, transaksi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-xs text-slate-700 placeholder-slate-400 focus:outline-none font-medium"
-                />
-              </div>
-
-              {/* Glendale-style Logo Plaque */}
-              <div className="flex items-center gap-2 shrink-0">
+          {/* Brand Logo & Collapse Icon */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#1b4332] text-white flex items-center justify-center shadow-xs p-1">
                 <img
                   src="/logo-jam.png"
                   alt="JAM"
-                  className="h-8 w-auto object-contain"
+                  className="w-full h-full object-contain"
                 />
-                <span className="font-extrabold text-sm tracking-tight text-slate-900 font-display">
-                  glendale<span className="text-blue-600">.jam</span>
-                </span>
               </div>
+              <span className="font-extrabold text-base tracking-tight text-slate-900">
+                Visualboard<span className="text-[#2d6a4f]">.jam</span>
+              </span>
             </div>
 
-            {/* 🌟 VIBRANT ROYAL BLUE HORIZONTAL RIBBON WITH ORGANIC CUTOUT TAB */}
-            <div className="bg-[#1254d3] px-5 pt-2 flex items-center gap-2 overflow-x-auto relative select-none">
-              
-              {/* Tab 1: Papan Kawalan (Glendale Board View) - ACTIVE WITH ORGANIC CONCAVE FILLET */}
-              <div className="relative">
-                {activeTab === 'BOARD' && (
-                  <>
-                    {/* Left concave fillet SVG */}
-                    <div className="absolute -left-3 bottom-0 w-3 h-3 text-[#f4f7fb] pointer-events-none">
-                      <svg viewBox="0 0 12 12" className="w-full h-full" fill="currentColor">
-                        <path d="M12,0 C12,6.627 6.627,12 0,12 L12,12 Z" />
-                      </svg>
-                    </div>
-                    {/* Right concave fillet SVG */}
-                    <div className="absolute -right-3 bottom-0 w-3 h-3 text-[#f4f7fb] pointer-events-none">
-                      <svg viewBox="0 0 12 12" className="w-full h-full" fill="currentColor">
-                        <path d="M0,0 C0,6.627 5.373,12 12,12 L0,12 Z" />
-                      </svg>
-                    </div>
-                  </>
-                )}
+            <button
+              title="Kecilkan bar sisi"
+              className="w-7 h-7 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer"
+            >
+              <PanelLeftClose className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-                <button
-                  onClick={() => setActiveTab('BOARD')}
-                  className={`px-5 py-2.5 rounded-t-2xl font-black text-xs flex items-center gap-2 transition cursor-pointer relative ${
-                    activeTab === 'BOARD'
-                      ? 'bg-[#f4f7fb] text-slate-900 shadow-sm'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#ff6b4a] inline-block"></span>
-                  <span>Task Board</span>
-                </button>
+          {/* Profile Card Pill (Barudak visual / Urusetia JAM) */}
+          <div className="bg-[#f4f7f5] border border-slate-200/80 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer hover:border-slate-300 transition">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 p-0.5 shrink-0 shadow-2xs">
+                <img
+                  src="/logo-jam.png"
+                  alt="Avatar"
+                  className="w-full h-full object-contain rounded-full bg-white p-0.5"
+                />
               </div>
-
-              {/* Tab 2: Ringkasan KPI (Overview) */}
-              <button
-                onClick={() => setActiveTab('OVERVIEW')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'OVERVIEW'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>Reports & KPI</span>
-              </button>
-
-              {/* Tab 3: Agih Subsidi (Grant) */}
-              <button
-                onClick={() => setActiveTab('GRANT')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'GRANT'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Gift className="w-3.5 h-3.5" />
-                <span>Agih Subsidi</span>
-              </button>
-
-              {/* Tab 4: Pengurusan Had Masa Expiry */}
-              <button
-                onClick={() => setActiveTab('EXPIRY')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'EXPIRY'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>Had Masa Expiry</span>
-                <span className="bg-emerald-400 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full">
-                  AKTIF
-                </span>
-              </button>
-
-              {/* Tab 5: Tuntutan Peniaga Gerai */}
-              <button
-                onClick={() => setActiveTab('CLAIMS')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'CLAIMS'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>Tuntutan Gerai</span>
-                {pendingClaimsCount > 0 && (
-                  <span className="bg-amber-400 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full">
-                    {pendingClaimsCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Tab 6: Direktori Ahli & Gerai */}
-              <button
-                onClick={() => setActiveTab('MEMBERS')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'MEMBERS'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5" />
-                <span>Ahli & Gerai</span>
-              </button>
-
-              {/* Tab 7: Rekod Audit */}
-              <button
-                onClick={() => setActiveTab('AUDIT')}
-                className={`px-4 py-2.5 rounded-t-2xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
-                  activeTab === 'AUDIT'
-                    ? 'bg-[#f4f7fb] text-slate-900'
-                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Audit Trail</span>
-              </button>
+              <div>
+                <h4 className="text-xs font-black text-slate-900 leading-tight">
+                  Urusetia JAM
+                </h4>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  3.09K Ahli Berdaftar
+                </p>
+              </div>
             </div>
-
-            {/* 🌟 TAB CONTENT AREA */}
-            <div className="flex-1 p-5 space-y-5">
-              
-              {/* ======================================================== */}
-              {/* VIEW 1: GLENDALE TASK BOARD VIEW (DEFAULT GLENDALE STYLE) */}
-              {/* ======================================================== */}
-              {activeTab === 'BOARD' && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  
-                  {/* Title & Navigation Row */}
-                  <div className="flex items-center justify-between pb-2">
-                    <div className="flex items-center gap-3">
-                      <button className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition cursor-pointer">
-                        <ArrowLeft className="w-4 h-4" />
-                      </button>
-
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                            Task Board View
-                          </h2>
-                          <span className="bg-rose-50 text-rose-600 border border-rose-300 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
-                            URGENT
-                          </span>
-                          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold px-2 py-0.5 rounded-md font-mono">
-                            1 MATA = 1 SEN
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">
-                          Due Date: <strong>Today at 11:00PM (08 Nov 2026, 18:00)</strong>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition cursor-pointer">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                      <button className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition cursor-pointer">
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Two-Column Glendale Canvas Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                    
-                    {/* LEFT / CENTER COLUMN: TASK DETAILS, CHECKLIST, LIVE CHAT STREAM */}
-                    <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-6">
-                      
-                      {/* Description & Metadata Section */}
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                          Task Description
-                        </span>
-                        <h3 className="text-sm font-extrabold text-slate-900 mt-1">
-                          Complete Task Board view on this Thursday • Pelaksanaan Agihan Subsidi Jualan Agro MADANI
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                          Sistem agihan mata subsidi digital terus ke kad kesetiaan pembeli dengan nilai 1 Mata = 1 Sen. Penebusan dibuat di gerai ayam segar, telur, sayur dan buah tempatan.
-                        </p>
-                      </div>
-
-                      {/* Meta Grid: Due Date, Members, Task Owner */}
-                      <div className="grid grid-cols-3 gap-4 pt-3 border-t border-slate-100 text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-medium">Due Date</span>
-                          <p className="font-extrabold text-slate-800 mt-0.5 font-mono">
-                            Today at 11:00PM
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-medium">Members</span>
-                          <div className="flex items-center -space-x-1.5 mt-1">
-                            <div className="w-6 h-6 rounded-full bg-indigo-500 text-white font-bold text-[9px] flex items-center justify-center border border-white">
-                              PR
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-emerald-500 text-white font-bold text-[9px] flex items-center justify-center border border-white">
-                              SH
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-blue-500 text-white font-bold text-[9px] flex items-center justify-center border border-white">
-                              SR
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-medium">Task Owner</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold text-[9px] flex items-center justify-center">
-                              GO
-                            </div>
-                            <span className="font-bold text-slate-800 text-xs">Gilbert Oliver</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Interactive Checklist / Actions (Glendale Style) */}
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-2">
-                          Actions & Checklist
-                        </span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          {checklist.map((item) => (
-                            <div
-                              key={item.id}
-                              onClick={() => toggleChecklist(item.id)}
-                              className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer"
-                            >
-                              <div
-                                className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
-                                  item.done
-                                    ? 'bg-[#22c55e] border-[#22c55e] text-white'
-                                    : 'border-slate-300 bg-white'
-                                }`}
-                              >
-                                {item.done && <Check className="w-3 h-3 stroke-[3]" />}
-                              </div>
-                              <span
-                                className={`font-semibold ${
-                                  item.done ? 'text-slate-800' : 'text-slate-500'
-                                }`}
-                              >
-                                {item.text}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Comments / Stream Section (Glendale Style) */}
-                      <div className="pt-4 border-t border-slate-100">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-3">
-                          Comments & Live Audit Stream
-                        </span>
-
-                        <div className="space-y-3.5">
-                          {customAuditNotes.map((note, idx) => (
-                            <div key={idx} className="flex items-start gap-3 text-xs">
-                              <div
-                                className={`w-8 h-8 rounded-full ${note.avatarColor} text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs`}
-                              >
-                                {note.author.split(' ')[0][0]}
-                                {note.author.split(' ')[1] ? note.author.split(' ')[1][0] : ''}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-extrabold text-slate-800">
-                                    {note.author}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {note.time}
-                                  </span>
-                                </div>
-                                <div className="mt-1 bg-slate-50/90 rounded-2xl rounded-tl-xs p-3 text-slate-700 text-xs border border-slate-100 shadow-2xs leading-relaxed inline-block max-w-xl">
-                                  {note.text}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Recent Transactions formatted into Glendale Stream */}
-                          {transactions.slice(0, 2).map((tx) => (
-                            <div key={tx.id} className="flex items-start gap-3 text-xs">
-                              <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                                TX
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-extrabold text-slate-800">
-                                    {tx.memberName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400">
-                                    {tx.timestamp}
-                                  </span>
-                                </div>
-                                <div className="mt-1 bg-blue-50/80 rounded-2xl rounded-tl-xs p-3 text-blue-900 text-xs border border-blue-100 shadow-2xs inline-block">
-                                  <strong>
-                                    {tx.type === 'OWNER_GRANT' ? 'Subsidi Masuk:' : 'Penebusan di Gerai:'}
-                                  </strong>{' '}
-                                  {tx.amountPoints} Mata (RM {tx.amountRM.toFixed(2)}) • {tx.note}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Interactive Chat Input Bar (Glendale Style) */}
-                        <form
-                          onSubmit={handleAddComment}
-                          className="mt-4 flex items-center bg-slate-50 border border-slate-200 rounded-full px-4 py-2 gap-2 shadow-inner"
-                        >
-                          <input
-                            type="text"
-                            placeholder="Type your message / Catatan audit..."
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
-                          />
-                          <div className="flex items-center gap-2 text-slate-400">
-                            <Smile className="w-4 h-4 hover:text-slate-600 cursor-pointer" />
-                            <Paperclip className="w-4 h-4 hover:text-slate-600 cursor-pointer" />
-                            <button
-                              type="submit"
-                              className="w-7 h-7 rounded-full bg-[#175ceb] text-white flex items-center justify-center hover:bg-blue-600 transition cursor-pointer"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-
-                    {/* RIGHT COLUMN: ADD WIDGETS & SHARED FILES (GLENDALE STYLE) */}
-                    <div className="lg:col-span-4 space-y-4">
-                      
-                      {/* Glendale "Add" Actions Panel */}
-                      <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-2.5">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-                          Add & Tindakan Pantas
-                        </span>
-
-                        {/* Primary Solid Blue Action Button (Glendale Style) */}
-                        <button
-                          onClick={() => setActiveTab('GRANT')}
-                          className="w-full bg-[#1b63eb] text-white rounded-2xl py-3 px-4 text-xs font-black flex items-center gap-2.5 shadow-md shadow-blue-500/20 hover:bg-blue-600 transition cursor-pointer"
-                        >
-                          <Users className="w-4 h-4" />
-                          <span>Agih Mata Subsidi Ahli</span>
-                        </button>
-
-                        <button
-                          onClick={() => setActiveTab('EXPIRY')}
-                          className="w-full bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 rounded-2xl py-2.5 px-4 text-xs font-bold flex items-center gap-2.5 transition cursor-pointer"
-                        >
-                          <Clock className="w-4 h-4 text-rose-500" />
-                          <span>Urus Had Tempoh Expiry</span>
-                        </button>
-
-                        <button
-                          onClick={() => setActiveTab('CLAIMS')}
-                          className="w-full bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-700 border border-slate-200 rounded-2xl py-2.5 px-4 text-xs font-bold flex items-center gap-2.5 transition cursor-pointer"
-                        >
-                          <Store className="w-4 h-4 text-amber-500" />
-                          <span>Tuntutan Peniaga ({pendingClaimsCount})</span>
-                        </button>
-
-                        <button
-                          onClick={handleExpireAll}
-                          className="w-full bg-slate-50 hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-2xl py-2.5 px-4 text-xs font-bold flex items-center gap-2.5 transition cursor-pointer"
-                        >
-                          <AlertTriangle className="w-4 h-4 text-rose-600" />
-                          <span>Lupuskan Melepasi Had</span>
-                        </button>
-                      </div>
-
-                      {/* Glendale "Shared files" Widget */}
-                      <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-[11px] font-black text-slate-900 block">
-                              Shared files
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              04 files, Bahan Rasmi JAM
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer">
-                            Lihat Semua
-                          </span>
-                        </div>
-
-                        {/* File list items matching Glendale Screenshot */}
-                        <div className="space-y-2">
-                          <div className="p-2.5 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-between hover:bg-white transition cursor-pointer">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                                <ImageIcon className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-800 truncate max-w-[140px]">
-                                  Standee_QR_Gerai_A01.svg
-                                </p>
-                                <p className="text-[10px] text-slate-400 font-mono">
-                                  04/11/26 • 512.0 KB
-                                </p>
-                              </div>
-                            </div>
-                            <Download className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                          </div>
-
-                          <div className="p-2.5 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-between hover:bg-white transition cursor-pointer">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                                <ImageIcon className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-800 truncate max-w-[140px]">
-                                  Kad_Mewah_Loyalty_JAM.jpg
-                                </p>
-                                <p className="text-[10px] text-slate-400 font-mono">
-                                  04/11/26 • 820.0 KB
-                                </p>
-                              </div>
-                            </div>
-                            <Download className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                          </div>
-
-                          <div className="p-2.5 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-between hover:bg-white transition cursor-pointer">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                                <FileIcon className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-bold text-slate-800 truncate max-w-[140px]">
-                                  Senarai_Harga_Siling_JAM.pdf
-                                </p>
-                                <p className="text-[10px] text-slate-400 font-mono">
-                                  04/11/26 • 1.2 MB
-                                </p>
-                              </div>
-                            </div>
-                            <Download className="w-3.5 h-3.5 text-slate-400 hover:text-blue-600" />
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 2: FINANCIAL KPI OVERVIEW (REPORTS) */}
-              {/* ======================================================== */}
-              {activeTab === 'OVERVIEW' && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
-                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                        <span>Jumlah Diagih</span>
-                        <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <p className="text-2xl font-black text-slate-900 mt-2 font-mono">
-                        RM {totalGrantedRM.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-emerald-600 font-semibold mt-0.5">
-                        {totalGrantedPoints.toLocaleString()} Mata
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
-                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                        <span>Ditebus di Gerai</span>
-                        <TrendingDown className="w-4 h-4 text-rose-600" />
-                      </div>
-                      <p className="text-2xl font-black text-slate-900 mt-2 font-mono">
-                        RM {totalRedeemedRM.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-rose-600 font-semibold mt-0.5">
-                        {totalRedeemedPoints.toLocaleString()} Mata Ditolak
-                      </p>
-                    </div>
-
-                    <div className="bg-rose-50/70 p-5 rounded-3xl border border-rose-200 shadow-xs">
-                      <div className="flex items-center justify-between text-rose-800 text-xs font-bold">
-                        <span>Luput Dipulangkan</span>
-                        <Clock className="w-4 h-4 text-rose-600" />
-                      </div>
-                      <p className="text-2xl font-black text-rose-600 mt-2 font-mono">
-                        RM {totalExpiredRM.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-rose-700 font-semibold mt-0.5">
-                        {totalExpiredPoints.toLocaleString()} Mata Luput
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
-                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                        <span>Baki Belum Ditebus</span>
-                        <Coins className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <p className="text-2xl font-black text-blue-600 mt-2 font-mono">
-                        RM {unredeemedRM.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">
-                        Dalam dompet ahli
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
-                      <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
-                        <span>Ahli Berdaftar</span>
-                        <Users className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <p className="text-2xl font-black text-slate-900 mt-2 font-mono">
-                        {members.length} Ahli
-                      </p>
-                      <p className="text-xs text-indigo-600 font-semibold mt-0.5">
-                        {sellers.length} Gerai Berdaftar
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 3: GRANT POINTS FORM */}
-              {/* ======================================================== */}
-              {activeTab === 'GRANT' && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                      <Gift className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-black text-slate-900">
-                        Agih Mata Subsidi Kepada Ahli (Bantuan Jualan)
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Setiap RM 1.00 bersamaan 100 mata. Tetapkan tarikh had masa supaya mata tidak digunakan boleh tamat tempoh.
-                      </p>
-                    </div>
-                  </div>
-
-                  {grantSuccessMsg && (
-                    <div className="bg-emerald-50 border border-emerald-300 p-3.5 rounded-2xl text-xs text-emerald-800 font-bold flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{grantSuccessMsg}</span>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleGrant} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Sasaran Penerima:
-                        </label>
-                        <select
-                          value={grantTarget}
-                          onChange={(e) => setGrantTarget(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="ALL">Semua Ahli Berdaftar ({members.length} Orang)</option>
-                          {members.map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name} ({m.cardId})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
-                          Nilai Subsidi Setiap Ahli (RM):
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
-                            RM
-                          </span>
-                          <input
-                            type="number"
-                            step="1"
-                            min="1"
-                            value={amountRM}
-                            onChange={(e) => setAmountRM(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-3.5 py-2.5 text-xs font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                          <span>Tarikh Luput Mata:</span>
-                          <span className="text-[10px] text-rose-600 font-bold">Masa Tamat</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={expiryDate}
-                          onChange={(e) => setExpiryDate(e.target.value)}
-                          placeholder="YYYY-MM-DD HH:mm"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2.5 text-xs font-mono text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Nama Kempen / Catatan Agihan:
-                      </label>
-                      <input
-                        type="text"
-                        value={campaignName}
-                        onChange={(e) => setCampaignName(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-
-                    {/* Presets */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-bold text-slate-500">Pilihan Pantas:</span>
-                      <button
-                        type="button"
-                        onClick={() => setPreset(10, 'Baucar Khas Hujung Minggu JAM', '2026-11-08 18:00')}
-                        className="bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1 rounded-full cursor-pointer"
-                      >
-                        RM 10 (Pasar 8 Nov, 18:00)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPreset(20, 'Subsidi Ayam & Sayur MADANI', '2026-11-15 18:00')}
-                        className="bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1 rounded-full cursor-pointer"
-                      >
-                        RM 20 (Promosi 15 Nov, 18:00)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPreset(50, 'Bantuan Barangan Asas Bulanan', '2026-11-30 23:59')}
-                        className="bg-slate-100 hover:bg-blue-50 border border-slate-200 text-slate-700 text-[10px] font-bold px-3 py-1 rounded-full cursor-pointer"
-                      >
-                        RM 50 (Akhir Bulan 30 Nov)
-                      </button>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full bg-[#1b63eb] text-white py-3.5 rounded-full font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-blue-500/20 hover:bg-blue-600"
-                    >
-                      <Gift className="w-4 h-4" /> Sahkan & Agihkan Mata dengan Had Masa
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 4: POINTS EXPIRY MANAGEMENT */}
-              {/* ======================================================== */}
-              {activeTab === 'EXPIRY' && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 animate-in fade-in duration-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-rose-500" /> Pengurusan Had Tempoh Mata Kad (Points Expiry Date)
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Kawal had masa mata subsidi supaya mata yang tidak digunakan boleh tamat tempoh automatik dan dana dipulangkan ke peruntukan JAM.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={handleExpireAll}
-                      className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition cursor-pointer self-start sm:self-auto"
-                    >
-                      <AlertTriangle className="w-4 h-4" /> Lupuskan Mata Melepasi Had Masa
-                    </button>
-                  </div>
-
-                  {expirySuccessMsg && (
-                    <div className="bg-emerald-50 border border-emerald-300 p-3.5 rounded-2xl text-xs text-emerald-800 font-bold flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{expirySuccessMsg}</span>
-                    </div>
-                  )}
-
-                  {/* Quick Batch Expiry Extender Form */}
-                  <div className="bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-2.5 text-xs">
-                    <span className="font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
-                      <Calendar className="w-4 h-4 text-blue-600" /> Tetapkan Had Masa Pukal:
-                    </span>
-                    <select
-                      value={selectedMemberToExtend}
-                      onChange={(e) => setSelectedMemberToExtend(e.target.value)}
-                      className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none"
-                    >
-                      <option value="ALL">Semua Ahli Sekaligus</option>
-                      {members.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.name.split(' ')[0]} ({m.cardId})
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      value={customExtendDate}
-                      onChange={(e) => setCustomExtendDate(e.target.value)}
-                      placeholder="YYYY-MM-DD HH:mm"
-                      className="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none w-36"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleApplyExtension(selectedMemberToExtend || 'ALL')}
-                      className="bg-[#1b63eb] text-white font-extrabold text-xs px-3.5 py-1.5 rounded-xl ml-auto cursor-pointer"
-                    >
-                      Kemas Kini Tarikh
-                    </button>
-                  </div>
-
-                  {/* Members Expiry Status Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
-                        <tr>
-                          <th className="py-3 px-3 rounded-l-2xl">Ahli & No. Kad</th>
-                          <th className="py-3 px-3">Baki Mata Aktif</th>
-                          <th className="py-3 px-3">Tarikh Luput Semasa</th>
-                          <th className="py-3 px-3">Status Tempoh</th>
-                          <th className="py-3 px-3 rounded-r-2xl text-right">Tindakan Admin</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {members.map((m) => (
-                          <tr key={m.id} className="hover:bg-blue-50/30">
-                            <td className="py-3 px-3">
-                              <span className="font-bold text-slate-900 block">{m.name}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">{m.cardId}</span>
-                            </td>
-                            <td className="py-3 px-3 font-mono font-black text-slate-900">
-                              {m.points.toLocaleString()} Mata
-                              <span className="text-[10px] text-slate-400 block font-normal">
-                                (RM {(m.points / 100).toFixed(2)})
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 font-mono text-slate-700 font-semibold">
-                              {m.pointsExpiryDate || 'Tiada had'}
-                            </td>
-                            <td className="py-3 px-3">
-                              {m.points > 0 ? (
-                                <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                  Sah Aktif
-                                </span>
-                              ) : (
-                                <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                  Sifar / Telah Luput
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3 px-3 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => handleApplyExtension(m.id)}
-                                  className="bg-white hover:bg-blue-50 border border-blue-200 text-blue-700 font-bold text-[10px] px-2.5 py-1 rounded-full transition cursor-pointer"
-                                >
-                                  + Lanjut
-                                </button>
-                                {m.points > 0 && (
-                                  <button
-                                    onClick={() => handleExpireSingle(m.id, m.name)}
-                                    className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-[10px] px-2.5 py-1 rounded-full transition cursor-pointer"
-                                  >
-                                    Lupuskan
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 5: SELLER REIMBURSEMENT CLAIMS */}
-              {/* ======================================================== */}
-              {activeTab === 'CLAIMS' && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                        <Store className="w-5 h-5 text-blue-600" /> Tuntutan Bayaran Balik Peniaga Gerai
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Peniaga yang menerima potongan mata JAM menuntut bayaran balik tunai/DuitNow daripada penganjur.
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                      {claims.length} Permohonan
-                    </span>
-                  </div>
-
-                  {claims.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 text-xs">
-                      Tiada permohonan tuntutan daripada peniaga setakat ini.
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs text-left">
-                        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
-                          <tr>
-                            <th className="py-3 px-3 rounded-l-2xl">No. Tuntutan</th>
-                            <th className="py-3 px-3">Gerai & Peniaga</th>
-                            <th className="py-3 px-3">Masa</th>
-                            <th className="py-3 px-3">Jumlah (RM)</th>
-                            <th className="py-3 px-3">Status</th>
-                            <th className="py-3 px-3 rounded-r-2xl text-right">Tindakan</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {claims.map((clm) => (
-                            <tr key={clm.id} className="hover:bg-blue-50/40">
-                              <td className="py-3 px-3 font-mono font-bold text-slate-800">
-                                {clm.id}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span className="font-bold text-slate-900 block">
-                                  {clm.sellerName}
-                                </span>
-                                <span className="text-[10px] text-slate-400">
-                                  Gerai: {clm.stallNumber}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-slate-500">{clm.timestamp}</td>
-                              <td className="py-3 px-3 font-mono font-black text-slate-900">
-                                RM {clm.amountRM.toFixed(2)}
-                              </td>
-                              <td className="py-3 px-3">
-                                <span
-                                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                                    clm.status === 'PAID'
-                                      ? 'bg-emerald-100 text-emerald-800'
-                                      : 'bg-amber-100 text-amber-800'
-                                  }`}
-                                >
-                                  {clm.status === 'PAID' ? 'SELESAI DIBAYAR' : 'MENUNGGU KELULUSAN'}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-right">
-                                {clm.status !== 'PAID' ? (
-                                  <button
-                                    onClick={() => onApproveClaim(clm.id)}
-                                    className="bg-[#1b63eb] text-white font-bold text-[10px] px-3.5 py-1.5 rounded-full transition cursor-pointer"
-                                  >
-                                    Luluskan & Bayar
-                                  </button>
-                                ) : (
-                                  <span className="text-emerald-600 font-bold text-[11px] flex items-center justify-end gap-1">
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Berbayar
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 6: MEMBERS & STALLS DIRECTORY */}
-              {/* ======================================================== */}
-              {activeTab === 'MEMBERS' && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-indigo-600" /> Direktori Ahli & Pemegang Kad
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Senarai penerima subsidi dengan baki mata aktif dan tarikh tamat.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
-                        <tr>
-                          <th className="py-3 px-3 rounded-l-2xl">Nama Ahli</th>
-                          <th className="py-3 px-3">No. Kad JAM</th>
-                          <th className="py-3 px-3">No. Telefon</th>
-                          <th className="py-3 px-3">Baki Mata (RM)</th>
-                          <th className="py-3 px-3 rounded-r-2xl">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {members.map((m) => (
-                          <tr key={m.id} className="hover:bg-blue-50/30">
-                            <td className="py-3 px-3 font-bold text-slate-900">{m.name}</td>
-                            <td className="py-3 px-3 font-mono font-bold text-blue-700">{m.cardId}</td>
-                            <td className="py-3 px-3 text-slate-600">{m.phone}</td>
-                            <td className="py-3 px-3 font-mono font-black text-slate-900">
-                              {m.points.toLocaleString()} Mata (RM {(m.points / 100).toFixed(2)})
-                            </td>
-                            <td className="py-3 px-3">
-                              <span
-                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                                  m.points > 0
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
-                              >
-                                {m.points > 0 ? 'Aktif' : 'Sifar / Luput'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ======================================================== */}
-              {/* VIEW 7: DIGITAL AUDIT TRAIL */}
-              {/* ======================================================== */}
-              {activeTab === 'AUDIT' && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-                        <ShieldCheck className="w-5 h-5 text-emerald-600" /> Log Audit Ketirisan & Imbasan Sah
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Setiap transaksi direkodkan dengan identiti pembeli, gerai peniaga dan masa rasmi.
-                      </p>
-                    </div>
-                    <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold px-3 py-1 rounded-full">
-                      100% Imbasan QR Sah
-                    </span>
-                  </div>
-
-                  <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
-                    {transactions.map((tx) => (
-                      <div key={tx.id} className="py-2.5 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-[10px] ${
-                              tx.type === 'OWNER_GRANT'
-                                ? 'bg-amber-100 text-amber-800'
-                                : tx.type === 'EXPIRY'
-                                ? 'bg-rose-100 text-rose-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {tx.type === 'OWNER_GRANT' ? 'AGIH' : tx.type === 'EXPIRY' ? 'LUPUT' : 'IMBAS'}
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-800">
-                              {tx.type === 'OWNER_GRANT'
-                                ? `Agihan Subsidi ke ${tx.memberName}`
-                                : tx.type === 'EXPIRY'
-                                ? `Pelupusan Mata (${tx.memberName})`
-                                : `${tx.memberName} ➔ ${tx.sellerName} (Gerai ${tx.stallNumber})`}
-                            </p>
-                            <p className="text-[10px] text-slate-400">
-                              ID: {tx.id} • {tx.timestamp} • {tx.note}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span
-                            className={`font-mono font-black ${
-                              tx.type === 'EXPIRY' ? 'text-rose-600' : 'text-slate-900'
-                            }`}
-                          >
-                            {tx.type === 'EXPIRY' ? '-' : ''}RM {tx.amountRM.toFixed(2)}
-                          </span>
-                          <span className="text-[10px] text-slate-400 block font-mono">
-                            {tx.amountPoints} Mata
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+            <div className="flex flex-col text-slate-400">
+              <ChevronDown className="w-3.5 h-3.5" />
             </div>
           </div>
 
-        </div>
+          {/* Nav Section: GENERAL */}
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-1.5">
+              GENERAL
+            </span>
+
+            {/* Item 1: Dashboard (Active Pill with Sage Green background & ⌘ D) */}
+            <button
+              onClick={() => setActiveNav('DASHBOARD')}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition cursor-pointer ${
+                activeNav === 'DASHBOARD'
+                  ? 'bg-[#eaf4ec] text-[#1b4332] shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid className="w-4 h-4 text-[#2d6a4f]" />
+                <span>Dashboard</span>
+              </div>
+              <span className="text-[9px] font-mono font-bold bg-white/80 border border-slate-200/70 text-slate-500 px-1.5 py-0.5 rounded-md">
+                ⌘ D
+              </span>
+            </button>
+
+            {/* Item 2: Orders / Penebusan & Belian */}
+            <button
+              onClick={() => {
+                setActiveNav('ORDERS');
+                setIsClaimsModalOpen(true);
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                activeNav === 'ORDERS'
+                  ? 'bg-[#eaf4ec] text-[#1b4332]'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <ShoppingBag className="w-4 h-4 text-slate-400" />
+                <span>Orders (Tuntutan)</span>
+              </div>
+              {pendingClaimsCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] flex items-center justify-center">
+                  {pendingClaimsCount}
+                </span>
+              )}
+            </button>
+
+            {/* Item 3: Products / Produk & Gerai */}
+            <button
+              onClick={() => setActiveNav('PRODUCTS')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                activeNav === 'PRODUCTS'
+                  ? 'bg-[#eaf4ec] text-[#1b4332]'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-slate-400" />
+              <span>Products (Produk)</span>
+            </button>
+
+            {/* Item 4: Analytics / Had Tempoh Expiry */}
+            <button
+              onClick={() => {
+                setActiveNav('ANALYTICS');
+                setIsExpiryModalOpen(true);
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                activeNav === 'ANALYTICS'
+                  ? 'bg-[#eaf4ec] text-[#1b4332]'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <BarChart2 className="w-4 h-4 text-slate-400" />
+                <span>Had Masa (Expiry)</span>
+              </div>
+              <span className="text-[8px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">
+                AKTIF
+              </span>
+            </button>
+
+            {/* Item 5: Messages / Suapan Transaksi */}
+            <button
+              onClick={() => setActiveNav('MESSAGES')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                activeNav === 'MESSAGES'
+                  ? 'bg-[#eaf4ec] text-[#1b4332]'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 text-slate-400" />
+              <span>Messages (Audit)</span>
+            </button>
+          </div>
+
+          {/* Nav Section: HELP & SETTINGS */}
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-1.5">
+              HELP & SETTINGS
+            </span>
+
+            <button
+              onClick={() => setIsGrantModalOpen(true)}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+            >
+              <Headphones className="w-4 h-4 text-slate-400" />
+              <span>Agih Mata Subsidi</span>
+            </button>
+
+            <button
+              onClick={() => onResetData && onResetData()}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+            >
+              <Settings className="w-4 h-4 text-slate-400" />
+              <span>Set Semula Data</span>
+            </button>
+          </div>
+
+          {/* Bottom Promo Card (Upgrade your plan / Peruntukan Dana JAM) */}
+          <div className="mt-auto bg-[#f2f7f4] border border-[#d2e7d7] rounded-3xl p-3.5 text-center relative overflow-hidden space-y-2">
+            {/* Orange Shopping Bag Motif matching reference image */}
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-sm">
+              <ShoppingBag className="w-6 h-6 text-white stroke-[2.5]" />
+            </div>
+
+            <div>
+              <h5 className="text-xs font-black text-slate-900 leading-tight">
+                Dana Subsidi JAM
+              </h5>
+              <p className="text-[10px] text-slate-500 mt-0.5">
+                Baki Peruntukan Penganjur: <strong>RM 50,000</strong>
+              </p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full bg-[#dceee0] h-2 rounded-full overflow-hidden">
+              <div className="bg-[#2d6a4f] h-full w-[65%] rounded-full"></div>
+            </div>
+
+            <button
+              onClick={() => setIsGrantModalOpen(true)}
+              className="w-full bg-white text-[#1b4332] border border-[#b8dcbf] hover:bg-[#e4f2e7] font-black text-[11px] py-1.5 rounded-xl transition cursor-pointer shadow-2xs"
+            >
+              Agih Subsidi Sekarang ➔
+            </button>
+          </div>
+        </aside>
+
+        {/* ======================================================== */}
+        {/* 2. MAIN CONTENT AREA (VISUALBOARD CANVAS)                */}
+        {/* ======================================================== */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-7 overflow-y-auto space-y-5">
+          
+          {/* Top Header Row: Greeting & Right User Action Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+            <div>
+              <span className="text-xs text-slate-400 font-medium block">
+                Good Morning,
+              </span>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                Fadhilah rizky husaini • Pengarah JAM
+              </h1>
+            </div>
+
+            {/* Right Action Cluster matching reference image */}
+            <div className="flex items-center gap-2.5 self-start sm:self-auto">
+              
+              {/* Circular Search button */}
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer shadow-2xs">
+                <Search className="w-4 h-4" />
+              </button>
+
+              {/* Circular Notification Bell with dot */}
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer relative shadow-2xs">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
+              </button>
+
+              {/* Circular Inbox button with badge 4 */}
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer relative shadow-2xs">
+                <Mail className="w-4 h-4" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#1b4332] text-white text-[9px] font-black flex items-center justify-center">
+                  4
+                </span>
+              </button>
+
+              {/* User Profile Pill matching reference screenshot */}
+              <div className="bg-white border border-slate-200/90 rounded-full py-1 pl-1 pr-3 flex items-center gap-2 shadow-2xs cursor-pointer hover:border-slate-300 transition">
+                <div className="w-7 h-7 rounded-full bg-amber-400 overflow-hidden flex items-center justify-center font-bold text-xs text-slate-900">
+                  MR
+                </div>
+                <div className="hidden md:block leading-tight text-left">
+                  <p className="text-xs font-black text-slate-900">Miquella Strife</p>
+                  <p className="text-[9px] text-slate-400">miquellastrife@gmail.com</p>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick View Switcher Ribbon (Buyer / Seller / Split) */}
+          {onSwitchView && (
+            <div className="flex items-center gap-2 bg-white/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-2xs text-xs font-bold overflow-x-auto">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider px-2 font-black">
+                MOD PAPARAN:
+              </span>
+              <button
+                onClick={() => onSwitchView('SPLIT')}
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <span>Simulasi Serentak</span>
+              </button>
+              <button
+                onClick={() => onSwitchView('BUYER')}
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <span>Skrin Pembeli (Ahli)</span>
+              </button>
+              <button
+                onClick={() => onSwitchView('SELLER')}
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+              >
+                <Store className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <span>Standee Gerai (Peniaga)</span>
+              </button>
+            </div>
+          )}
+
+          {/* 🌟 2-COLUMN GRID (CENTER HERO + RIGHT METRICS WIDGETS) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            
+            {/* ======================================================== */}
+            {/* CENTER COLUMN (HERO, SALES FUNNEL, PRODUCTS TABLE)      */}
+            {/* ======================================================== */}
+            <div className="lg:col-span-8 space-y-5">
+              
+              {/* 1. FOREST GREEN HERO BANNER CARD (EXACT VISUALBOARD HERO) */}
+              <div className="bg-gradient-to-r from-[#173a2b] via-[#24573f] to-[#367957] text-white rounded-[32px] p-6 sm:p-7 shadow-lg relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
+                
+                {/* Background decorative waves / glow */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div className="relative z-10 max-w-sm space-y-3">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
+                    Here's happening in your sales last weeks 👋
+                  </h2>
+
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+                        RM {totalRedeemedRM > 0 ? totalRedeemedRM.toFixed(2) : '8,567.00'}
+                      </span>
+                      <span className="text-xs text-emerald-200 font-bold uppercase tracking-wider">
+                        Sales profit
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-100/90 mt-1 leading-relaxed">
+                      2,478 barangan segar telah ditebus oleh ahli menggunakan kad kesetiaan JAM (1 Mata = 1 Sen).
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsGrantModalOpen(true)}
+                    className="inline-flex items-center gap-2 bg-white text-[#173a2b] hover:bg-emerald-50 px-5 py-2.5 rounded-full font-black text-xs transition cursor-pointer shadow-md"
+                  >
+                    <span>View report</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-[#173a2b]" />
+                  </button>
+                </div>
+
+                {/* Right Illustration / 3D Graphics Motif */}
+                <div className="relative z-10 shrink-0 w-44 sm:w-56 h-36 flex items-center justify-center">
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Visual Globe & Fresh Produce composition */}
+                    <div className="w-28 h-28 rounded-full bg-emerald-400/30 border-2 border-emerald-300/40 flex items-center justify-center p-2 relative shadow-inner">
+                      <img
+                        src="/logo-jam.png"
+                        alt="JAM"
+                        className="w-16 h-16 object-contain drop-shadow-md"
+                      />
+                    </div>
+
+                    {/* Floating produce cards */}
+                    <div className="absolute top-0 right-2 w-12 h-12 rounded-2xl bg-white p-1 shadow-lg border border-white">
+                      <img
+                        src="/ayam_segar.png"
+                        alt="Ayam"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    </div>
+
+                    <div className="absolute bottom-1 left-2 w-11 h-11 rounded-2xl bg-white p-1 shadow-lg border border-white">
+                      <img
+                        src="/buah_tempatan.png"
+                        alt="Buah"
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. SALES FUNNEL / MULTI-TIER METRICS STRIP CARD */}
+              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs relative overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                    Sales funnel (Aliran Subsidi JAM)
+                  </h3>
+                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* 4 Metric Columns matching reference layout */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 relative z-10">
+                  {/* Column 1 */}
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      All sessions
+                    </span>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
+                        {totalGrantedPoints > 0 ? `${(totalGrantedPoints / 1000).toFixed(1)}K` : '289.12K'}
+                      </span>
+                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                        <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 mt-0.5 block">
+                      No shopping activity 48.5%
+                    </span>
+                  </div>
+
+                  {/* Column 2 */}
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      Product views
+                    </span>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
+                        {totalRedeemedPoints > 0 ? `${(totalRedeemedPoints / 1000).toFixed(1)}K` : '184.64K'}
+                      </span>
+                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                        <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 mt-0.5 block">
+                      No cart addition 24.9%
+                    </span>
+                  </div>
+
+                  {/* Column 3 */}
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      Add to cart
+                    </span>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
+                        {unredeemedRM > 0 ? `${(unredeemedRM * 10).toFixed(1)}K` : '156.3K'}
+                      </span>
+                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                        <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 mt-0.5 block">
+                      Cart abandon 16.7%
+                    </span>
+                  </div>
+
+                  {/* Column 4 */}
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      Checkout
+                    </span>
+                    <div className="flex items-baseline gap-1.5 mt-1">
+                      <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
+                        {totalExpiredPoints > 0 ? `${(totalExpiredPoints / 1000).toFixed(1)}K` : '65.8K'}
+                      </span>
+                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                        <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
+                      </span>
+                    </div>
+                    <span className="text-[9px] text-slate-400 mt-0.5 block">
+                      Checkout abandon 19.2%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Smooth Multi-Step Green Area Wave Chart across the bottom */}
+                <div className="mt-4 -mx-6 -mb-6 h-16 overflow-hidden relative">
+                  <svg
+                    viewBox="0 0 500 70"
+                    preserveAspectRatio="none"
+                    className="w-full h-full"
+                  >
+                    <defs>
+                      <linearGradient id="visualboardWave" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#40916c" stopOpacity="0.7" />
+                        <stop offset="100%" stopColor="#95d5b2" stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M 0,45 Q 60,30 130,48 T 260,35 T 390,52 L 500,60 L 500,70 L 0,70 Z"
+                      fill="url(#visualboardWave)"
+                    />
+                    <path
+                      d="M 0,45 Q 60,30 130,48 T 260,35 T 390,52 L 500,60"
+                      fill="none"
+                      stroke="#2d6a4f"
+                      strokeWidth="2.5"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              {/* 3. TOP SELLING PRODUCTS TABLE CARD (EXACT VISUALBOARD TABLE) */}
+              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                      Top selling products (Produk Segar Terlaris JAM)
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Barangan subsidi yang paling kerap ditebus oleh ahli menggunakan mata kad.
+                    </p>
+                  </div>
+                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
+                      <tr>
+                        <th className="py-2.5 px-3">
+                          <input type="checkbox" className="rounded-sm accent-[#2d6a4f]" /> PRODUCTS
+                        </th>
+                        <th className="py-2.5 px-3">STOCKS</th>
+                        <th className="py-2.5 px-3">PRICE</th>
+                        <th className="py-2.5 px-3">SALES</th>
+                        <th className="py-2.5 px-3 text-right">EARNINGS</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {PRODUCT_ROWS.map((row) => (
+                        <tr key={row.id} className="hover:bg-slate-50/60 transition">
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-3">
+                              <input type="checkbox" className="rounded-sm accent-[#2d6a4f]" />
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 p-1 shrink-0 border border-slate-200/60 overflow-hidden">
+                                <img
+                                  src={row.image}
+                                  alt={row.name}
+                                  className="w-full h-full object-cover rounded-lg"
+                                />
+                              </div>
+                              <div>
+                                <span className="font-extrabold text-slate-900 block">
+                                  {row.name}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {row.sub}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 font-mono text-slate-700">
+                            {row.stocks}
+                          </td>
+                          <td className="py-3 px-3 font-mono font-bold text-slate-800">
+                            {row.price}
+                          </td>
+                          <td className="py-3 px-3 font-mono text-slate-700">
+                            {row.sales}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span className="font-mono font-black text-slate-900">
+                                {row.earnings}
+                              </span>
+                              <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                                {row.growth}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* ======================================================== */}
+            {/* RIGHT COLUMN (TOP CATEGORIES GAUGE & UPCOMING EVENTS)    */}
+            {/* ======================================================== */}
+            <div className="lg:col-span-4 space-y-5">
+              
+              {/* 1. TOP CATEGORIES DONUT / GAUGE CARD (EXACT VISUALBOARD STYLE) */}
+              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                    Top categories
+                  </h3>
+                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Semi-Circle Gauge Arc matching reference screenshot */}
+                <div className="flex flex-col items-center justify-center pt-2">
+                  <div className="relative w-48 h-28 flex items-end justify-center">
+                    <svg viewBox="0 0 200 115" className="w-full h-full">
+                      {/* Segment 1: Fashion / Ayam & Daging (80%) */}
+                      <path
+                        d="M 25 105 A 75 75 0 0 1 145 35"
+                        fill="none"
+                        stroke="#2d6a4f"
+                        strokeWidth="22"
+                        strokeLinecap="round"
+                      />
+                      {/* Segment 2: Electronics / Sayur (24%) */}
+                      <path
+                        d="M 148 37 A 75 75 0 0 1 172 75"
+                        fill="none"
+                        stroke="#1b4332"
+                        strokeWidth="22"
+                        strokeLinecap="round"
+                      />
+                      {/* Segment 3: Food / Buah & Telur (16%) */}
+                      <path
+                        d="M 174 79 A 75 75 0 0 1 175 105"
+                        fill="none"
+                        stroke="#e59838"
+                        strokeWidth="22"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+
+                    {/* Gauge Center Text */}
+                    <div className="absolute bottom-1 text-center">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">
+                        TOTAL SALES
+                      </span>
+                      <span className="text-2xl font-black font-mono text-slate-900 tracking-tight leading-none">
+                        24,329,7
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Legends with percentages */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-100 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2d6a4f]"></span>
+                      <span className="font-bold text-slate-700">Ayam & Daging</span>
+                    </div>
+                    <span className="font-mono font-bold text-slate-900">80,02%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1b4332]"></span>
+                      <span className="font-bold text-slate-700">Sayur-Sayuran</span>
+                    </div>
+                    <span className="font-mono font-bold text-slate-900">24,53%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#e59838]"></span>
+                      <span className="font-bold text-slate-700">Buah & Telur</span>
+                    </div>
+                    <span className="font-mono font-bold text-slate-900">16,47%</span>
+                  </div>
+                </div>
+
+                {/* View Details Button */}
+                <button
+                  onClick={() => setIsClaimsModalOpen(true)}
+                  className="w-full border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <span>View details</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
+
+              {/* 2. NEXT UPCOMING EVENT (POINTS EXPIRY COUNTDOWN CARD) */}
+              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                    Next Upcoming Event
+                  </h3>
+                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Illustration with Hourglass / Expiry Timer */}
+                <div className="bg-[#f5faf6] rounded-2xl p-4 border border-[#d8edd9] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-[#2d6a4f] tracking-wider block">
+                      Had Masa Luput Mata
+                    </span>
+                    <h4 className="text-sm font-black text-slate-900 mt-0.5">
+                      08 Nov 2026, 18:00
+                    </h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Baki mata tamat tempoh automatik
+                    </p>
+                  </div>
+                  <div className="w-11 h-11 rounded-2xl bg-[#2d6a4f] text-white flex items-center justify-center shadow-sm">
+                    <Clock className="w-5 h-5 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* Event list items matching reference layout */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-3 cursor-pointer group">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200 overflow-hidden">
+                      <img
+                        src="/ayam_segar.png"
+                        alt="Event"
+                        className="w-full h-full object-cover group-hover:scale-105 transition"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs font-black text-slate-900 truncate">
+                        Pasar Tani Mega Putrajaya
+                      </h5>
+                      <p className="text-[10px] text-slate-400">
+                        08 November 2026 | 18:00 (Ahad)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 cursor-pointer group">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden">
+                      <img
+                        src="/buah_tempatan.png"
+                        alt="Event"
+                        className="w-full h-full object-cover group-hover:scale-105 transition"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs font-black text-slate-900 truncate">
+                        Jualan Agro MADANI Selayang
+                      </h5>
+                      <p className="text-[10px] text-slate-400">
+                        15 November 2026 | 18:00 (Ahad)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* View Event Calendar Button */}
+                <button
+                  onClick={() => setIsExpiryModalOpen(true)}
+                  className="w-full border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <span>View event calendar</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </main>
       </div>
+
+      {/* ======================================================== */}
+      {/* 🌟 MODALS FOR SYSTEM INTERACTION                         */}
+      {/* ======================================================== */}
+
+      {/* 1. MODAL: AGIH SUBSIDI MATA */}
+      {isGrantModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-lg p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-[#1b4332] flex items-center justify-center font-bold">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Agih Mata Subsidi Kepada Ahli
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    1 Mata = 1 Sen • Tetapkan had masa luput
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsGrantModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {grantSuccessMsg && (
+              <div className="bg-emerald-50 border border-emerald-300 p-3 rounded-2xl text-xs text-emerald-800 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{grantSuccessMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGrant} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Sasaran Penerima:
+                </label>
+                <select
+                  value={grantTarget}
+                  onChange={(e) => setGrantTarget(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                >
+                  <option value="ALL">Semua Ahli Berdaftar ({members.length} Orang)</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.cardId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Nilai Subsidi (RM):
+                  </label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    value={amountRM}
+                    onChange={(e) => setAmountRM(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    Tarikh Luput Mata:
+                  </label>
+                  <input
+                    type="text"
+                    value={expiryDate}
+                    onChange={(e) => setExpiryDate(e.target.value)}
+                    placeholder="YYYY-MM-DD HH:mm"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Catatan Kempen:
+                </label>
+                <input
+                  type="text"
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                  required
+                />
+              </div>
+
+              <div className="bg-[#f0f7f3] border border-[#c4e3cb] p-3 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-slate-500 text-[10px]">Jumlah Diagihkan:</span>
+                  <p className="font-mono font-black text-[#1b4332] text-sm">
+                    {totalPointsToDistribute.toLocaleString()} Mata (RM {totalRMToDistribute.toFixed(2)})
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  {totalTargetCount} Penerima
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-[#1b4332] hover:bg-[#255741] text-white font-black text-xs py-3 rounded-2xl transition cursor-pointer shadow-md"
+              >
+                Sahkan & Agihkan Mata Subsidi
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2. MODAL: PENGURUSAN HAD TEMPOH (EXPIRY MANAGEMENT) */}
+      {isExpiryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Pengurusan Had Tempoh Mata Kad (Expiry Management)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Kawal tarikh luput mata subsidi dan pulangkan baki yang tidak digunakan.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsExpiryModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {expirySuccessMsg && (
+              <div className="bg-emerald-50 border border-emerald-300 p-3 rounded-2xl text-xs text-emerald-800 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{expirySuccessMsg}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between bg-rose-50 border border-rose-200 p-3.5 rounded-2xl">
+              <div>
+                <p className="text-xs font-black text-rose-900">
+                  Lupuskan Semua Mata Melepasi Had Masa
+                </p>
+                <p className="text-[11px] text-rose-700 mt-0.5">
+                  Baki mata yang tidak dibelanjakan akan dipulangkan semula ke peruntukan utama JAM.
+                </p>
+              </div>
+              <button
+                onClick={handleExpireAll}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer shadow-xs shrink-0"
+              >
+                Lupuskan Sekarang
+              </button>
+            </div>
+
+            {/* Quick Extension Batch */}
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-bold text-slate-700">Lanjut Tarikh Pukal:</span>
+              <input
+                type="text"
+                value={customExtendDate}
+                onChange={(e) => setCustomExtendDate(e.target.value)}
+                placeholder="YYYY-MM-DD HH:mm"
+                className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => handleApplyExtension('ALL')}
+                className="bg-[#2d6a4f] text-white font-bold text-xs px-3 py-1 rounded-lg cursor-pointer"
+              >
+                Kemas Kini Semua
+              </button>
+            </div>
+
+            {/* Members table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                  <tr>
+                    <th className="py-2.5 px-3">Ahli</th>
+                    <th className="py-2.5 px-3">Baki Mata</th>
+                    <th className="py-2.5 px-3">Tarikh Luput</th>
+                    <th className="py-2.5 px-3 text-right">Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {members.map((m) => (
+                    <tr key={m.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-3">
+                        <span className="font-bold text-slate-900 block">{m.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{m.cardId}</span>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                        {m.points.toLocaleString()} Mata (RM {(m.points / 100).toFixed(2)})
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600">
+                        {m.pointsExpiryDate || 'Tiada had'}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleApplyExtension(m.id)}
+                            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer"
+                          >
+                            + Lanjut
+                          </button>
+                          {m.points > 0 && (
+                            <button
+                              onClick={() => handleExpireSingle(m.id, m.name)}
+                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer"
+                            >
+                              Lupuskan
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. MODAL: TUNTUTAN GERAI (CLAIMS) */}
+      {isClaimsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Tuntutan Bayaran Balik Peniaga Gerai
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Semak permohonan bayaran balik tunai bagi mata yang ditebus oleh ahli di gerai.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsClaimsModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {claims.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">
+                Tiada permohonan tuntutan daripada peniaga setakat ini.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                    <tr>
+                      <th className="py-2.5 px-3">No. Tuntutan</th>
+                      <th className="py-2.5 px-3">Peniaga & Gerai</th>
+                      <th className="py-2.5 px-3">Jumlah (RM)</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3 text-right">Tindakan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {claims.map((clm) => (
+                      <tr key={clm.id} className="hover:bg-slate-50">
+                        <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                          {clm.id}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="font-bold text-slate-900 block">{clm.sellerName}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">Gerai: {clm.stallNumber}</span>
+                        </td>
+                        <td className="py-2.5 px-3 font-mono font-black text-slate-900">
+                          RM {clm.amountRM.toFixed(2)}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              clm.status === 'PAID'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {clm.status === 'PAID' ? 'SELESAI DIBAYAR' : 'MENUNGGU KELULUSAN'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          {clm.status !== 'PAID' ? (
+                            <button
+                              onClick={() => onApproveClaim(clm.id)}
+                              className="bg-[#2d6a4f] hover:bg-[#1e4a38] text-white font-bold text-[10px] px-3 py-1 rounded-lg transition cursor-pointer"
+                            >
+                              Luluskan
+                            </button>
+                          ) : (
+                            <span className="text-emerald-700 font-bold text-[10px] flex items-center justify-end gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Berbayar
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
