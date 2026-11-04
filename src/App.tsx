@@ -24,6 +24,7 @@ import {
   RotateCcw,
   Sparkles,
   HeartHandshake,
+  LayoutGrid,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -375,8 +376,8 @@ export const App: React.FC = () => {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Penganjur (Owner)</span>
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Dashboard (Penganjur)</span>
             </button>
           </div>
 
@@ -443,6 +444,8 @@ export const App: React.FC = () => {
             onApproveClaim={handleApproveClaim}
             onExpireUnusedPoints={handleExpireUnusedPoints}
             onUpdateExpiryDate={handleUpdateExpiryDate}
+            onSwitchView={setActiveView}
+            onResetData={handleResetData}
           />
         )}
       </main>
