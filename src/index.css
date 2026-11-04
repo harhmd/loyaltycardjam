@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'San Francisco', system-ui, sans-serif;
+    background-color: #f0f7ff;
+    color: #0f172a;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro', 'San Francisco', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  .font-display {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro', 'San Francisco', system-ui, sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  .font-fancy-italic {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    letter-spacing: 0.02em;
+  }
+
+  .font-mono {
+    font-family: 'SF Mono', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Glassmorphism utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.06);
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+}
+
+.btn-gradient-blue {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+  box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-gradient-blue:hover {
+  box-shadow: 0 12px 24px -3px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-gradient-blue:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.3);
+}
+
+/* Wavy organic gradient background */
+.theme-gradient-wave {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 35%, #06b6d4 70%, #22c55e 100%);
+}
+
+.card-gloss-shimmer {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+}
