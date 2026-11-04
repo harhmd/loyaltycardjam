@@ -25,6 +25,14 @@ import {
   Sparkles,
   HeartHandshake,
   LayoutGrid,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Gift,
+  Coins
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -52,6 +60,10 @@ export const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'SPLIT' | 'BUYER' | 'SELLER' | 'OWNER'>('SPLIT');
   const [currentMemberId, setCurrentMemberId] = useState<string>('MEM-001');
   const [currentSellerId, setCurrentSellerId] = useState<string>('STALL-001');
+
+  // Sidebar Collapse states
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Sync to localStorage
   useEffect(() => {
@@ -295,7 +307,7 @@ export const App: React.FC = () => {
 
   // Reset to initial test data
   const handleResetData = () => {
-    if (window.confirm('Adakah anda ingin set semula semua data ke asal?')) {
+    if (window.confirm('Adakah anda ingin set semula semua data contoh ke asal?')) {
       setMembers(INITIAL_MEMBERS);
       setSellers(INITIAL_SELLERS);
       setTransactions(INITIAL_TRANSACTIONS);
@@ -304,162 +316,440 @@ export const App: React.FC = () => {
     }
   };
 
+  // Navigation Items Specification
+  const NAV_ITEMS = [
+    {
+      id: 'SPLIT' as const,
+      label: 'Simulasi Serentak',
+      subtitle: 'Pembeli & Peniaga',
+      icon: ArrowRightLeft,
+      badge: 'Dual View',
+    },
+    {
+      id: 'BUYER' as const,
+      label: 'Ahli (Pembeli)',
+      subtitle: 'Kad Kesetiaan & QR',
+      icon: Smartphone,
+      badge: `${members.length} Ahli`,
+    },
+    {
+      id: 'SELLER' as const,
+      label: 'Peniaga (Gerai)',
+      subtitle: 'Standee QR & Tuntutan',
+      icon: Store,
+      badge: `${sellers.length} Gerai`,
+    },
+    {
+      id: 'OWNER' as const,
+      label: 'Dashboard (Penganjur)',
+      subtitle: 'Analisis, Agihan & Expiry',
+      icon: LayoutGrid,
+      badge: 'Admin',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f0f7ff] flex flex-col text-slate-800">
-      {/* Top Glassmorphic Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-white shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Logo / Branding */}
-          <div className="flex items-center gap-3">
-            <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
-              <img
-                src="/logo-jam.png"
-                alt="Jualan Agro MADANI"
-                className="h-10 w-auto object-contain"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-black tracking-tight text-slate-900">
-                  KAD KESETIAAN JAM
-                </span>
-                <span className="text-[10px] bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider">
-                  MADANI
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Penebusan Mata Belian Jualan Agro MADANI (1 Mata = 1 Sen)
-              </p>
-            </div>
+    <div className="min-h-screen bg-[#f0f7ff] flex flex-col md:flex-row text-slate-800 antialiased font-sans">
+      
+      {/* ======================================================== */}
+      {/* 1. MOBILE TOP HEADER (SHOWN ONLY ON SMALL SCREENS < MD)   */}
+      {/* ======================================================== */}
+      <header className="md:hidden sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-blue-100 px-4 py-3 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-white border border-slate-100 p-0.5 shadow-xs flex items-center justify-center">
+            <img
+              src="/logo-jam.png"
+              alt="JAM"
+              className="w-full h-full object-contain"
+            />
           </div>
-
-          {/* Navigation View Switcher (Rounded Pill dock) */}
-          <div className="flex items-center bg-white/90 p-1.5 rounded-full border border-slate-200/80 shadow-xs text-xs font-bold">
-            <button
-              onClick={() => setActiveView('SPLIT')}
-              className={`px-4 py-2 rounded-full transition flex items-center gap-1.5 cursor-pointer ${
-                activeView === 'SPLIT'
-                  ? 'btn-gradient-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5" />
-              <span>Simulasi Serentak</span>
-            </button>
-            <button
-              onClick={() => setActiveView('BUYER')}
-              className={`px-4 py-2 rounded-full transition flex items-center gap-1.5 cursor-pointer ${
-                activeView === 'BUYER'
-                  ? 'btn-gradient-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Ahli (Pembeli)</span>
-            </button>
-            <button
-              onClick={() => setActiveView('SELLER')}
-              className={`px-4 py-2 rounded-full transition flex items-center gap-1.5 cursor-pointer ${
-                activeView === 'SELLER'
-                  ? 'btn-gradient-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Store className="w-3.5 h-3.5" />
-              <span>Peniaga (Gerai)</span>
-            </button>
-            <button
-              onClick={() => setActiveView('OWNER')}
-              className={`px-4 py-2 rounded-full transition flex items-center gap-1.5 cursor-pointer ${
-                activeView === 'OWNER'
-                  ? 'btn-gradient-blue text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Dashboard (Penganjur)</span>
-            </button>
-          </div>
-
-          {/* Reset Demo Button */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleResetData}
-              title="Set Semula Data Contoh"
-              className="text-slate-500 hover:text-slate-900 bg-white hover:bg-slate-50 px-3 py-2 rounded-full transition text-xs flex items-center gap-1.5 border border-slate-200/80 shadow-2xs cursor-pointer font-bold"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden md:inline">Reset Data</span>
-            </button>
+          <div>
+            <h1 className="text-xs font-black text-slate-900 tracking-tight leading-tight">
+              KAD KESETIAAN JAM
+            </h1>
+            <p className="text-[10px] text-blue-600 font-bold">
+              {NAV_ITEMS.find((n) => n.id === activeView)?.label}
+            </p>
           </div>
         </div>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200 cursor-pointer transition hover:bg-blue-100"
+          title="Buka Menu"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
-        {activeView === 'SPLIT' && (
-          <SplitView
-            currentMember={currentMember}
-            allMembers={members}
-            onSelectMember={setCurrentMemberId}
-            currentSeller={currentSeller}
-            allSellers={sellers}
-            onSelectSeller={setCurrentSellerId}
-            onMakePayment={handleMakePayment}
-            transactions={transactions}
-            claims={claims}
-            onSubmitClaim={handleSubmitClaim}
-          />
+      {/* ======================================================== */}
+      {/* 2. MOBILE SIDEBAR DRAWER OVERLAY                         */}
+      {/* ======================================================== */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex">
+          <div className="w-72 bg-white h-full shadow-2xl p-5 flex flex-col justify-between border-r border-blue-100">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-white border border-slate-100 p-1 shadow-xs flex items-center justify-center">
+                    <img
+                      src="/logo-jam.png"
+                      alt="JAM"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-black text-slate-900 leading-tight">
+                      KAD KESETIAAN JAM
+                    </h2>
+                    <span className="text-[9px] bg-blue-100 text-blue-700 font-extrabold px-1.5 py-0.2 rounded-full">
+                      MADANI
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Navigation Items in Mobile */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block">
+                  PILIHAN MOD PAPARAN
+                </span>
+                {NAV_ITEMS.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveView(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition cursor-pointer ${
+                      activeView === item.id
+                        ? 'btn-gradient-blue text-white shadow-md'
+                        : 'text-slate-600 hover:bg-blue-50/70 hover:text-blue-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <div className="text-left leading-tight">
+                        <span className="block font-black">{item.label}</span>
+                        <span className={`text-[10px] ${activeView === item.id ? 'text-blue-100' : 'text-slate-400'}`}>
+                          {item.subtitle}
+                        </span>
+                      </div>
+                    </div>
+                    {item.badge && (
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                        activeView === item.id ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Footer */}
+            <div className="pt-4 border-t border-slate-100 space-y-2">
+              <button
+                onClick={() => {
+                  handleResetData();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition text-xs font-bold"
+              >
+                <RotateCcw className="w-4 h-4 text-slate-400" />
+                <span>Set Semula Data Contoh</span>
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="flex-1"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 3. DESKTOP COLLAPSIBLE SIDE MENU NAVIGATION               */}
+      {/* ======================================================== */}
+      <aside
+        className={`hidden md:flex flex-col sticky top-0 h-screen bg-white/95 backdrop-blur-xl border-r border-blue-100 shadow-md z-40 transition-all duration-300 ease-in-out shrink-0 ${
+          isSidebarCollapsed ? 'w-[76px] p-3' : 'w-[264px] p-5'
+        }`}
+      >
+        {/* Top Branding Section */}
+        <div className="pb-4 border-b border-blue-50">
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-white border border-slate-100 p-1 shadow-xs flex items-center justify-center shrink-0">
+                  <img
+                    src="/logo-jam.png"
+                    alt="JAM"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black tracking-tight text-slate-900 whitespace-nowrap">
+                      KAD KESETIAAN JAM
+                    </span>
+                    <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded-full font-black uppercase">
+                      MADANI
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    1 Mata = 1 Sen (RM 0.01)
+                  </p>
+                </div>
+              </div>
+
+              {/* Collapse Icon Button */}
+              <button
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="w-7 h-7 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition cursor-pointer"
+                title="Kecilkan bar sisi"
+              >
+                <PanelLeftClose className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-2xl bg-white border border-slate-100 p-1 shadow-xs flex items-center justify-center">
+                <img
+                  src="/logo-jam.png"
+                  alt="JAM"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <button
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="w-7 h-7 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition cursor-pointer"
+                title="Kembangkan bar sisi"
+              >
+                <PanelLeftOpen className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Middle Navigation Section */}
+        <div className="flex-1 py-4 space-y-1.5 overflow-y-auto">
+          {!isSidebarCollapsed && (
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 block mb-2">
+              MOD PAPARAN SISTEM
+            </span>
+          )}
+
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeView === item.id;
+            return !isSidebarCollapsed ? (
+              // Expanded item button
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition cursor-pointer group ${
+                  isActive
+                    ? 'btn-gradient-blue text-white shadow-md'
+                    : 'text-slate-600 hover:bg-blue-50/70 hover:text-blue-700'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-700'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="block font-black truncate text-xs">{item.label}</span>
+                    <span
+                      className={`text-[10px] block truncate ${
+                        isActive ? 'text-blue-100' : 'text-slate-400'
+                      }`}
+                    >
+                      {item.subtitle}
+                    </span>
+                  </div>
+                </div>
+
+                {item.badge && (
+                  <span
+                    className={`text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200/60'
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            ) : (
+              // Collapsed item icon
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                title={`${item.label} (${item.subtitle})`}
+                className={`relative w-12 h-12 mx-auto rounded-2xl flex items-center justify-center transition cursor-pointer group ${
+                  isActive
+                    ? 'btn-gradient-blue text-white shadow-md'
+                    : 'text-slate-500 hover:bg-blue-50 hover:text-blue-600'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                {isActive && (
+                  <span className="absolute -left-1 w-1 h-5 rounded-r-full bg-blue-600"></span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Promo / Info Widget (Only when expanded) */}
+        {!isSidebarCollapsed && (
+          <div className="my-2 bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white border border-blue-100 rounded-2xl p-3 text-center space-y-1">
+            <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">
+              Kadar Subsidi Rasmi
+            </span>
+            <p className="text-xs font-black text-slate-900 font-mono">
+              1 Mata = 1 Sen (RM 0.01)
+            </p>
+            <p className="text-[10px] text-slate-500 leading-tight">
+              Penebusan segera di gerai pameran Jualan Agro MADANI.
+            </p>
+          </div>
         )}
 
-        {activeView === 'BUYER' && (
-          <BuyerPortal
-            currentMember={currentMember}
-            allMembers={members}
-            onSelectMember={setCurrentMemberId}
-            sellers={sellers}
-            onMakePayment={handleMakePayment}
-            transactions={transactions}
-          />
-        )}
+        {/* Bottom System Controls */}
+        <div className="pt-3 border-t border-blue-50 space-y-2">
+          {!isSidebarCollapsed ? (
+            <>
+              {/* Reset Data Button */}
+              <button
+                onClick={handleResetData}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition text-xs font-bold cursor-pointer"
+                title="Set semula data demo"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                <span>Reset Data Demo</span>
+              </button>
 
-        {activeView === 'SELLER' && (
-          <SellerPortal
-            currentSeller={currentSeller}
-            allSellers={sellers}
-            onSelectSeller={setCurrentSellerId}
-            transactions={transactions}
-            claims={claims}
-            onSubmitClaim={handleSubmitClaim}
-          />
-        )}
+              {/* Collapse Switcher Bar */}
+              <button
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-bold text-slate-400 hover:text-blue-600 transition cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Kecilkan Menu</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Collapsed Reset Data */}
+              <button
+                onClick={handleResetData}
+                title="Set Semula Data Contoh"
+                className="w-11 h-11 mx-auto rounded-xl border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
 
-        {activeView === 'OWNER' && (
-          <OwnerPortal
-            members={members}
-            sellers={sellers}
-            transactions={transactions}
-            claims={claims}
-            onGrantPoints={handleGrantPoints}
-            onApproveClaim={handleApproveClaim}
-            onExpireUnusedPoints={handleExpireUnusedPoints}
-            onUpdateExpiryDate={handleUpdateExpiryDate}
-            onSwitchView={setActiveView}
-            onResetData={handleResetData}
-          />
-        )}
-      </main>
+              {/* Collapsed Expand Button */}
+              <button
+                onClick={() => setIsSidebarCollapsed(false)}
+                title="Kembangkan Menu"
+                className="w-11 h-11 mx-auto rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </aside>
 
-      {/* Footer */}
-      <footer className="bg-white/80 backdrop-blur-md border-t border-white py-4 px-4 text-center text-xs text-slate-500">
-        <p className="flex items-center justify-center gap-1.5 font-medium">
-          <HeartHandshake className="w-4 h-4 text-blue-600" /> Inisiatif Inovasi Digital
-          <strong className="text-slate-800">Program Jualan Agro MADANI (JAM)</strong>
-        </p>
-        <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
-          Kadar Tetap: 1 Mata = 1 Sen (RM 0.01) • Imbas QR Meja Gerai • Perlindungan Ketirisan Baucar
-        </p>
-      </footer>
+      {/* ======================================================== */}
+      {/* 4. MAIN CONTENT AREA (FLEXIBLE CANVAS FOR ALL VIEWS)      */}
+      {/* ======================================================== */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-x-hidden">
+        
+        {/* Content Canvas */}
+        <main className="flex-1 p-3 sm:p-6 w-full max-w-7xl mx-auto">
+          {activeView === 'SPLIT' && (
+            <SplitView
+              currentMember={currentMember}
+              allMembers={members}
+              onSelectMember={setCurrentMemberId}
+              currentSeller={currentSeller}
+              allSellers={sellers}
+              onSelectSeller={setCurrentSellerId}
+              onMakePayment={handleMakePayment}
+              transactions={transactions}
+              claims={claims}
+              onSubmitClaim={handleSubmitClaim}
+            />
+          )}
+
+          {activeView === 'BUYER' && (
+            <BuyerPortal
+              currentMember={currentMember}
+              allMembers={members}
+              onSelectMember={setCurrentMemberId}
+              sellers={sellers}
+              onMakePayment={handleMakePayment}
+              transactions={transactions}
+            />
+          )}
+
+          {activeView === 'SELLER' && (
+            <SellerPortal
+              currentSeller={currentSeller}
+              allSellers={sellers}
+              onSelectSeller={setCurrentSellerId}
+              transactions={transactions}
+              claims={claims}
+              onSubmitClaim={handleSubmitClaim}
+            />
+          )}
+
+          {activeView === 'OWNER' && (
+            <OwnerPortal
+              members={members}
+              sellers={sellers}
+              transactions={transactions}
+              claims={claims}
+              onGrantPoints={handleGrantPoints}
+              onApproveClaim={handleApproveClaim}
+              onExpireUnusedPoints={handleExpireUnusedPoints}
+              onUpdateExpiryDate={handleUpdateExpiryDate}
+              onSwitchView={setActiveView}
+              onResetData={handleResetData}
+            />
+          )}
+        </main>
+
+        {/* Global Footer */}
+        <footer className="bg-white/80 backdrop-blur-md border-t border-blue-50 py-3 px-4 text-center text-xs text-slate-500">
+          <p className="flex items-center justify-center gap-1.5 font-medium">
+            <HeartHandshake className="w-4 h-4 text-blue-600" /> Inisiatif Inovasi Digital
+            <strong className="text-slate-800">Program Jualan Agro MADANI (JAM)</strong>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+            Kadar Tetap: 1 Mata = 1 Sen (RM 0.01) • Imbas QR Meja Gerai • Perlindungan Ketirisan Baucar
+          </p>
+        </footer>
+      </div>
+
     </div>
   );
 };
