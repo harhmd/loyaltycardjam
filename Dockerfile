@@ -7,9 +7,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Ensure devDependencies are installed for building
+ENV NODE_ENV=development
+
 # Install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy source code and assets
 COPY . .
