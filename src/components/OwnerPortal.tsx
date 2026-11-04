@@ -160,7 +160,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
     setTimeout(() => setExpirySuccessMsg(''), 4000);
   };
 
-  // Products Table Data matching reference layout
+  // Products Table Data matching reference layout with JAM fresh produce
   const PRODUCT_ROWS = [
     {
       id: '1',
@@ -209,20 +209,20 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   ];
 
   return (
-    <div className="bg-[#f2f5f3] min-h-[920px] p-2 sm:p-5 rounded-[40px] text-slate-800 font-sans select-none border border-slate-200/80 shadow-2xl">
+    <div className="bg-[#f0f7ff] min-h-[920px] p-2 sm:p-5 rounded-[40px] text-slate-800 font-sans select-none border border-blue-100 shadow-2xl">
       
-      {/* 🌟 2-COLUMN VISUALBOARD SHELL */}
-      <div className="bg-[#f6f8f7] rounded-[36px] overflow-hidden flex flex-col lg:flex-row min-h-[880px] border border-white shadow-sm">
+      {/* 🌟 2-COLUMN VISUALBOARD SHELL WITH ICE-BLUE & GLASS THEME */}
+      <div className="bg-white/80 backdrop-blur-md rounded-[36px] overflow-hidden flex flex-col lg:flex-row min-h-[880px] border border-white shadow-sm">
         
         {/* ======================================================== */}
-        {/* 1. LEFT SIDEBAR (VISUALBOARD NAVIGATION)                 */}
+        {/* 1. LEFT SIDEBAR (VISUALBOARD NAVIGATION - BLUE/CYAN THEME) */}
         {/* ======================================================== */}
-        <aside className="w-full lg:w-[240px] bg-white border-r border-slate-200/80 p-5 flex flex-col shrink-0 space-y-6">
+        <aside className="w-full lg:w-[240px] bg-white border-r border-blue-50 p-5 flex flex-col shrink-0 space-y-6">
           
           {/* Brand Logo & Collapse Icon */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#1b4332] text-white flex items-center justify-center shadow-xs p-1">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs p-1">
                 <img
                   src="/logo-jam.png"
                   alt="JAM"
@@ -230,22 +230,22 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 />
               </div>
               <span className="font-extrabold text-base tracking-tight text-slate-900">
-                Visualboard<span className="text-[#2d6a4f]">.jam</span>
+                Visualboard<span className="text-blue-600">.jam</span>
               </span>
             </div>
 
             <button
               title="Kecilkan bar sisi"
-              className="w-7 h-7 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition cursor-pointer"
+              className="w-7 h-7 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 flex items-center justify-center transition cursor-pointer"
             >
               <PanelLeftClose className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Profile Card Pill (Barudak visual / Urusetia JAM) */}
-          <div className="bg-[#f4f7f5] border border-slate-200/80 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer hover:border-slate-300 transition">
+          <div className="bg-blue-50/50 border border-blue-100/80 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer hover:border-blue-200 transition">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-emerald-400 p-0.5 shrink-0 shadow-2xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-0.5 shrink-0 shadow-2xs">
                 <img
                   src="/logo-jam.png"
                   alt="Avatar"
@@ -256,7 +256,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 <h4 className="text-xs font-black text-slate-900 leading-tight">
                   Urusetia JAM
                 </h4>
-                <p className="text-[10px] text-slate-400 font-medium">
+                <p className="text-[10px] text-slate-500 font-medium">
                   3.09K Ahli Berdaftar
                 </p>
               </div>
@@ -272,20 +272,20 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               GENERAL
             </span>
 
-            {/* Item 1: Dashboard (Active Pill with Sage Green background & ⌘ D) */}
+            {/* Item 1: Dashboard (Active Pill with Royal Blue theme & ⌘ D) */}
             <button
               onClick={() => setActiveNav('DASHBOARD')}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition cursor-pointer ${
                 activeNav === 'DASHBOARD'
-                  ? 'bg-[#eaf4ec] text-[#1b4332] shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs'
+                  : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-600'
               }`}
             >
               <div className="flex items-center gap-2.5">
-                <LayoutGrid className="w-4 h-4 text-[#2d6a4f]" />
+                <LayoutGrid className="w-4 h-4 text-blue-600" />
                 <span>Dashboard</span>
               </div>
-              <span className="text-[9px] font-mono font-bold bg-white/80 border border-slate-200/70 text-slate-500 px-1.5 py-0.5 rounded-md">
+              <span className="text-[9px] font-mono font-bold bg-white border border-blue-100 text-blue-600 px-1.5 py-0.5 rounded-md shadow-2xs">
                 ⌘ D
               </span>
             </button>
@@ -298,8 +298,8 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
                 activeNav === 'ORDERS'
-                  ? 'bg-[#eaf4ec] text-[#1b4332]'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/80'
+                  : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-600'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -318,8 +318,8 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               onClick={() => setActiveNav('PRODUCTS')}
               className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
                 activeNav === 'PRODUCTS'
-                  ? 'bg-[#eaf4ec] text-[#1b4332]'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/80'
+                  : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-600'
               }`}
             >
               <Sparkles className="w-4 h-4 text-slate-400" />
@@ -334,8 +334,8 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               }}
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
                 activeNav === 'ANALYTICS'
-                  ? 'bg-[#eaf4ec] text-[#1b4332]'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/80'
+                  : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-600'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -352,8 +352,8 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               onClick={() => setActiveNav('MESSAGES')}
               className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition cursor-pointer ${
                 activeNav === 'MESSAGES'
-                  ? 'bg-[#eaf4ec] text-[#1b4332]'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200/80'
+                  : 'text-slate-600 hover:bg-blue-50/50 hover:text-blue-600'
               }`}
             >
               <MessageSquare className="w-4 h-4 text-slate-400" />
@@ -369,7 +369,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
 
             <button
               onClick={() => setIsGrantModalOpen(true)}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-blue-50/60 hover:text-blue-700 transition cursor-pointer"
             >
               <Headphones className="w-4 h-4 text-slate-400" />
               <span>Agih Mata Subsidi</span>
@@ -377,17 +377,17 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
 
             <button
               onClick={() => onResetData && onResetData()}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
             >
               <Settings className="w-4 h-4 text-slate-400" />
               <span>Set Semula Data</span>
             </button>
           </div>
 
-          {/* Bottom Promo Card (Upgrade your plan / Peruntukan Dana JAM) */}
-          <div className="mt-auto bg-[#f2f7f4] border border-[#d2e7d7] rounded-3xl p-3.5 text-center relative overflow-hidden space-y-2">
-            {/* Orange Shopping Bag Motif matching reference image */}
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-sm">
+          {/* Bottom Promo Card (Dana Subsidi JAM in Royal Blue Theme) */}
+          <div className="mt-auto bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white border border-blue-200/70 rounded-3xl p-3.5 text-center relative overflow-hidden space-y-2 shadow-xs">
+            {/* Blue & Cyan Shopping Bag Motif */}
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
               <ShoppingBag className="w-6 h-6 text-white stroke-[2.5]" />
             </div>
 
@@ -396,18 +396,18 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 Dana Subsidi JAM
               </h5>
               <p className="text-[10px] text-slate-500 mt-0.5">
-                Baki Peruntukan Penganjur: <strong>RM 50,000</strong>
+                Baki Peruntukan Penganjur: <strong className="text-blue-900">RM 50,000</strong>
               </p>
             </div>
 
-            {/* Progress bar */}
-            <div className="w-full bg-[#dceee0] h-2 rounded-full overflow-hidden">
-              <div className="bg-[#2d6a4f] h-full w-[65%] rounded-full"></div>
+            {/* Progress bar with Royal Blue to Emerald gradient */}
+            <div className="w-full bg-blue-100 h-2 rounded-full overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full w-[65%] rounded-full"></div>
             </div>
 
             <button
               onClick={() => setIsGrantModalOpen(true)}
-              className="w-full bg-white text-[#1b4332] border border-[#b8dcbf] hover:bg-[#e4f2e7] font-black text-[11px] py-1.5 rounded-xl transition cursor-pointer shadow-2xs"
+              className="w-full btn-gradient-blue text-white font-black text-[11px] py-2 rounded-xl transition cursor-pointer shadow-xs"
             >
               Agih Subsidi Sekarang ➔
             </button>
@@ -417,16 +417,16 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
         {/* ======================================================== */}
         {/* 2. MAIN CONTENT AREA (VISUALBOARD CANVAS)                */}
         {/* ======================================================== */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-7 overflow-y-auto space-y-5">
+        <main className="flex-1 p-4 sm:p-6 lg:p-7 overflow-y-auto space-y-5 bg-[#f8fbff]/70">
           
           {/* Top Header Row: Greeting & Right User Action Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
             <div>
               <span className="text-xs text-slate-400 font-medium block">
-                Good Morning,
+                Selamat Pagi,
               </span>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                Fadhilah rizky husaini • Pengarah JAM
+                Urusetia Induk • Pengarah Jualan Agro MADANI
               </h1>
             </div>
 
@@ -434,32 +434,32 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
               
               {/* Circular Search button */}
-              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer shadow-2xs">
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer shadow-2xs">
                 <Search className="w-4 h-4" />
               </button>
 
               {/* Circular Notification Bell with dot */}
-              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer relative shadow-2xs">
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer relative shadow-2xs">
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600"></span>
               </button>
 
               {/* Circular Inbox button with badge 4 */}
-              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-slate-50 transition cursor-pointer relative shadow-2xs">
+              <button className="w-9 h-9 rounded-full bg-white border border-slate-200/90 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer relative shadow-2xs">
                 <Mail className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#1b4332] text-white text-[9px] font-black flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
                   4
                 </span>
               </button>
 
               {/* User Profile Pill matching reference screenshot */}
-              <div className="bg-white border border-slate-200/90 rounded-full py-1 pl-1 pr-3 flex items-center gap-2 shadow-2xs cursor-pointer hover:border-slate-300 transition">
-                <div className="w-7 h-7 rounded-full bg-amber-400 overflow-hidden flex items-center justify-center font-bold text-xs text-slate-900">
-                  MR
+              <div className="bg-white border border-slate-200/90 rounded-full py-1 pl-1 pr-3 flex items-center gap-2 shadow-2xs cursor-pointer hover:border-blue-300 transition">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 overflow-hidden flex items-center justify-center font-bold text-xs text-white">
+                  JAM
                 </div>
                 <div className="hidden md:block leading-tight text-left">
-                  <p className="text-xs font-black text-slate-900">Miquella Strife</p>
-                  <p className="text-[9px] text-slate-400">miquellastrife@gmail.com</p>
+                  <p className="text-xs font-black text-slate-900">Urusetia Pusat</p>
+                  <p className="text-[9px] text-slate-400">admin@agro.madani.gov.my</p>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </div>
@@ -468,29 +468,29 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
 
           {/* Quick View Switcher Ribbon (Buyer / Seller / Split) */}
           {onSwitchView && (
-            <div className="flex items-center gap-2 bg-white/90 p-1.5 rounded-2xl border border-slate-200/80 shadow-2xs text-xs font-bold overflow-x-auto">
+            <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-blue-100 shadow-2xs text-xs font-bold overflow-x-auto">
               <span className="text-[10px] text-slate-400 uppercase tracking-wider px-2 font-black">
                 MOD PAPARAN:
               </span>
               <button
                 onClick={() => onSwitchView('SPLIT')}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 transition cursor-pointer flex items-center gap-1.5"
               >
-                <ArrowRightLeft className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600" />
                 <span>Simulasi Serentak</span>
               </button>
               <button
                 onClick={() => onSwitchView('BUYER')}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 transition cursor-pointer flex items-center gap-1.5"
               >
-                <Smartphone className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <Smartphone className="w-3.5 h-3.5 text-blue-600" />
                 <span>Skrin Pembeli (Ahli)</span>
               </button>
               <button
                 onClick={() => onSwitchView('SELLER')}
-                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-[#eaf4ec] hover:text-[#1b4332] transition cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 transition cursor-pointer flex items-center gap-1.5"
               >
-                <Store className="w-3.5 h-3.5 text-[#2d6a4f]" />
+                <Store className="w-3.5 h-3.5 text-blue-600" />
                 <span>Standee Gerai (Peniaga)</span>
               </button>
             </div>
@@ -504,45 +504,46 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
             {/* ======================================================== */}
             <div className="lg:col-span-8 space-y-5">
               
-              {/* 1. FOREST GREEN HERO BANNER CARD (EXACT VISUALBOARD HERO) */}
-              <div className="bg-gradient-to-r from-[#173a2b] via-[#24573f] to-[#367957] text-white rounded-[32px] p-6 sm:p-7 shadow-lg relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
+              {/* 1. ROYAL BLUE TO EMERALD HERO BANNER CARD (OFFICIAL THEME-GRADIENT-WAVE) */}
+              <div className="bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#059669] text-white rounded-[32px] p-6 sm:p-7 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
                 
-                {/* Background decorative waves / glow */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"></div>
+                {/* Background decorative waves / radial glow matching Buyer & Seller theme */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
 
                 <div className="relative z-10 max-w-sm space-y-3">
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
-                    Here's happening in your sales last weeks 👋
+                    Prestasi Jualan & Subsidi Terkini JAM 👋
                   </h2>
 
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+                      <span className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white drop-shadow-xs">
                         RM {totalRedeemedRM > 0 ? totalRedeemedRM.toFixed(2) : '8,567.00'}
                       </span>
-                      <span className="text-xs text-emerald-200 font-bold uppercase tracking-wider">
-                        Sales profit
+                      <span className="text-xs text-cyan-200 font-extrabold uppercase tracking-wider">
+                        Subsidi Ditebus
                       </span>
                     </div>
-                    <p className="text-xs text-emerald-100/90 mt-1 leading-relaxed">
+                    <p className="text-xs text-blue-50/90 mt-1 leading-relaxed">
                       2,478 barangan segar telah ditebus oleh ahli menggunakan kad kesetiaan JAM (1 Mata = 1 Sen).
                     </p>
                   </div>
 
                   <button
                     onClick={() => setIsGrantModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-white text-[#173a2b] hover:bg-emerald-50 px-5 py-2.5 rounded-full font-black text-xs transition cursor-pointer shadow-md"
+                    className="inline-flex items-center gap-2 bg-white text-blue-900 hover:bg-blue-50 px-5 py-2.5 rounded-full font-black text-xs transition cursor-pointer shadow-md"
                   >
-                    <span>View report</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-[#173a2b]" />
+                    <span>Agih Subsidi Baru</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-blue-700" />
                   </button>
                 </div>
 
-                {/* Right Illustration / 3D Graphics Motif */}
+                {/* Right Illustration / 3D Produce Motif */}
                 <div className="relative z-10 shrink-0 w-44 sm:w-56 h-36 flex items-center justify-center">
                   <div className="relative w-full h-full flex items-center justify-center">
-                    {/* Visual Globe & Fresh Produce composition */}
-                    <div className="w-28 h-28 rounded-full bg-emerald-400/30 border-2 border-emerald-300/40 flex items-center justify-center p-2 relative shadow-inner">
+                    {/* Visual Badge & Fresh Produce composition */}
+                    <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-md border-2 border-white/40 flex items-center justify-center p-2 relative shadow-inner">
                       <img
                         src="/logo-jam.png"
                         alt="JAM"
@@ -570,13 +571,13 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 </div>
               </div>
 
-              {/* 2. SALES FUNNEL / MULTI-TIER METRICS STRIP CARD */}
-              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs relative overflow-hidden">
+              {/* 2. SALES FUNNEL / MULTI-TIER METRICS STRIP CARD (BLUE-CYAN ACCENT) */}
+              <div className="bg-white rounded-[32px] p-6 border border-blue-50 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-black text-slate-900 tracking-tight">
                     Sales funnel (Aliran Subsidi JAM)
                   </h3>
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <button className="text-slate-400 hover:text-blue-600 cursor-pointer">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </div>
@@ -592,12 +593,12 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
                         {totalGrantedPoints > 0 ? `${(totalGrantedPoints / 1000).toFixed(1)}K` : '289.12K'}
                       </span>
-                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                      <span className="inline-flex items-center text-[9px] font-black text-blue-700 bg-blue-50 px-1 py-0.2 rounded-md">
                         <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
                       </span>
                     </div>
                     <span className="text-[9px] text-slate-400 mt-0.5 block">
-                      No shopping activity 48.5%
+                      Jumlah Mata Diagih
                     </span>
                   </div>
 
@@ -610,12 +611,12 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
                         {totalRedeemedPoints > 0 ? `${(totalRedeemedPoints / 1000).toFixed(1)}K` : '184.64K'}
                       </span>
-                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-md">
                         <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
                       </span>
                     </div>
                     <span className="text-[9px] text-slate-400 mt-0.5 block">
-                      No cart addition 24.9%
+                      Penebusan di Gerai
                     </span>
                   </div>
 
@@ -628,12 +629,12 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
                         {unredeemedRM > 0 ? `${(unredeemedRM * 10).toFixed(1)}K` : '156.3K'}
                       </span>
-                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                      <span className="inline-flex items-center text-[9px] font-black text-blue-700 bg-blue-50 px-1 py-0.2 rounded-md">
                         <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
                       </span>
                     </div>
                     <span className="text-[9px] text-slate-400 mt-0.5 block">
-                      Cart abandon 16.7%
+                      Baki Belum Ditebus
                     </span>
                   </div>
 
@@ -646,17 +647,17 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       <span className="text-xl sm:text-2xl font-black font-mono text-slate-900">
                         {totalExpiredPoints > 0 ? `${(totalExpiredPoints / 1000).toFixed(1)}K` : '65.8K'}
                       </span>
-                      <span className="inline-flex items-center text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                      <span className="inline-flex items-center text-[9px] font-black text-amber-700 bg-amber-50 px-1 py-0.2 rounded-md">
                         <ArrowUpRight className="w-2.5 h-2.5" /> 8.32%
                       </span>
                     </div>
                     <span className="text-[9px] text-slate-400 mt-0.5 block">
-                      Checkout abandon 19.2%
+                      Mata Luput / Pulang
                     </span>
                   </div>
                 </div>
 
-                {/* Smooth Multi-Step Green Area Wave Chart across the bottom */}
+                {/* Smooth Multi-Step Blue & Cyan Wave Chart across the bottom */}
                 <div className="mt-4 -mx-6 -mb-6 h-16 overflow-hidden relative">
                   <svg
                     viewBox="0 0 500 70"
@@ -664,27 +665,27 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                     className="w-full h-full"
                   >
                     <defs>
-                      <linearGradient id="visualboardWave" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#40916c" stopOpacity="0.7" />
-                        <stop offset="100%" stopColor="#95d5b2" stopOpacity="0.2" />
+                      <linearGradient id="visualboardBlueWave" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2563eb" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.08" />
                       </linearGradient>
                     </defs>
                     <path
                       d="M 0,45 Q 60,30 130,48 T 260,35 T 390,52 L 500,60 L 500,70 L 0,70 Z"
-                      fill="url(#visualboardWave)"
+                      fill="url(#visualboardBlueWave)"
                     />
                     <path
                       d="M 0,45 Q 60,30 130,48 T 260,35 T 390,52 L 500,60"
                       fill="none"
-                      stroke="#2d6a4f"
+                      stroke="#2563eb"
                       strokeWidth="2.5"
                     />
                   </svg>
                 </div>
               </div>
 
-              {/* 3. TOP SELLING PRODUCTS TABLE CARD (EXACT VISUALBOARD TABLE) */}
-              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+              {/* 3. TOP SELLING PRODUCTS TABLE CARD (HARMONIZED BLUE ACCENTS) */}
+              <div className="bg-white rounded-[32px] p-6 border border-blue-50 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-black text-slate-900 tracking-tight">
@@ -694,7 +695,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       Barangan subsidi yang paling kerap ditebus oleh ahli menggunakan mata kad.
                     </p>
                   </div>
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <button className="text-slate-400 hover:text-blue-600 cursor-pointer">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </div>
@@ -704,7 +705,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                     <thead className="text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
                       <tr>
                         <th className="py-2.5 px-3">
-                          <input type="checkbox" className="rounded-sm accent-[#2d6a4f]" /> PRODUCTS
+                          <input type="checkbox" className="rounded-sm accent-blue-600" /> PRODUCTS
                         </th>
                         <th className="py-2.5 px-3">STOCKS</th>
                         <th className="py-2.5 px-3">PRICE</th>
@@ -714,10 +715,10 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {PRODUCT_ROWS.map((row) => (
-                        <tr key={row.id} className="hover:bg-slate-50/60 transition">
+                        <tr key={row.id} className="hover:bg-blue-50/40 transition">
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-3">
-                              <input type="checkbox" className="rounded-sm accent-[#2d6a4f]" />
+                              <input type="checkbox" className="rounded-sm accent-blue-600" />
                               <div className="w-10 h-10 rounded-xl bg-slate-100 p-1 shrink-0 border border-slate-200/60 overflow-hidden">
                                 <img
                                   src={row.image}
@@ -749,7 +750,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                               <span className="font-mono font-black text-slate-900">
                                 {row.earnings}
                               </span>
-                              <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded-md">
+                              <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-md">
                                 {row.growth}
                               </span>
                             </div>
@@ -767,42 +768,42 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
             {/* ======================================================== */}
             <div className="lg:col-span-4 space-y-5">
               
-              {/* 1. TOP CATEGORIES DONUT / GAUGE CARD (EXACT VISUALBOARD STYLE) */}
-              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+              {/* 1. TOP CATEGORIES DONUT / GAUGE CARD (BLUE / EMERALD / AMBER) */}
+              <div className="bg-white rounded-[32px] p-6 border border-blue-50 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-slate-900 tracking-tight">
                     Top categories
                   </h3>
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <button className="text-slate-400 hover:text-blue-600 cursor-pointer">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Semi-Circle Gauge Arc matching reference screenshot */}
+                {/* Semi-Circle Gauge Arc with Royal Blue, Emerald Green, and Amber Gold */}
                 <div className="flex flex-col items-center justify-center pt-2">
                   <div className="relative w-48 h-28 flex items-end justify-center">
                     <svg viewBox="0 0 200 115" className="w-full h-full">
-                      {/* Segment 1: Fashion / Ayam & Daging (80%) */}
+                      {/* Segment 1: Ayam & Daging (Royal Blue #2563eb - 80%) */}
                       <path
                         d="M 25 105 A 75 75 0 0 1 145 35"
                         fill="none"
-                        stroke="#2d6a4f"
+                        stroke="#2563eb"
                         strokeWidth="22"
                         strokeLinecap="round"
                       />
-                      {/* Segment 2: Electronics / Sayur (24%) */}
+                      {/* Segment 2: Sayur-Sayuran (Emerald Green #10b981 - 24%) */}
                       <path
                         d="M 148 37 A 75 75 0 0 1 172 75"
                         fill="none"
-                        stroke="#1b4332"
+                        stroke="#10b981"
                         strokeWidth="22"
                         strokeLinecap="round"
                       />
-                      {/* Segment 3: Food / Buah & Telur (16%) */}
+                      {/* Segment 3: Buah & Telur (Amber Gold #f59e0b - 16%) */}
                       <path
                         d="M 174 79 A 75 75 0 0 1 175 105"
                         fill="none"
-                        stroke="#e59838"
+                        stroke="#f59e0b"
                         strokeWidth="22"
                         strokeLinecap="round"
                       />
@@ -820,11 +821,11 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                   </div>
                 </div>
 
-                {/* Category Legends with percentages */}
+                {/* Category Legends with matching color dots */}
                 <div className="space-y-2.5 pt-2 border-t border-slate-100 text-xs">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#2d6a4f]"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb]"></span>
                       <span className="font-bold text-slate-700">Ayam & Daging</span>
                     </div>
                     <span className="font-mono font-bold text-slate-900">80,02%</span>
@@ -832,7 +833,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#1b4332]"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
                       <span className="font-bold text-slate-700">Sayur-Sayuran</span>
                     </div>
                     <span className="font-mono font-bold text-slate-900">24,53%</span>
@@ -840,7 +841,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#e59838]"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
                       <span className="font-bold text-slate-700">Buah & Telur</span>
                     </div>
                     <span className="font-mono font-bold text-slate-900">16,47%</span>
@@ -850,28 +851,28 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 {/* View Details Button */}
                 <button
                   onClick={() => setIsClaimsModalOpen(true)}
-                  className="w-full border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="w-full border border-blue-200/80 hover:bg-blue-50 text-blue-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <span>View details</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                  <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
                 </button>
               </div>
 
-              {/* 2. NEXT UPCOMING EVENT (POINTS EXPIRY COUNTDOWN CARD) */}
-              <div className="bg-white rounded-[32px] p-6 border border-slate-200/80 shadow-xs space-y-4">
+              {/* 2. NEXT UPCOMING EVENT (POINTS EXPIRY COUNTDOWN CARD IN BLUE THEME) */}
+              <div className="bg-white rounded-[32px] p-6 border border-blue-50 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black text-slate-900 tracking-tight">
                     Next Upcoming Event
                   </h3>
-                  <button className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <button className="text-slate-400 hover:text-blue-600 cursor-pointer">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Illustration with Hourglass / Expiry Timer */}
-                <div className="bg-[#f5faf6] rounded-2xl p-4 border border-[#d8edd9] flex items-center justify-between">
+                {/* Illustration with Blue & Amber Expiry Timer Banner */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50/70 rounded-2xl p-4 border border-blue-200/80 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-[#2d6a4f] tracking-wider block">
+                    <span className="text-[10px] uppercase font-bold text-blue-700 tracking-wider block">
                       Had Masa Luput Mata
                     </span>
                     <h4 className="text-sm font-black text-slate-900 mt-0.5">
@@ -881,7 +882,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       Baki mata tamat tempoh automatik
                     </p>
                   </div>
-                  <div className="w-11 h-11 rounded-2xl bg-[#2d6a4f] text-white flex items-center justify-center shadow-sm">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-sm">
                     <Clock className="w-5 h-5 text-amber-300" />
                   </div>
                 </div>
@@ -889,7 +890,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 {/* Event list items matching reference layout */}
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200 overflow-hidden">
+                    <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-200 overflow-hidden">
                       <img
                         src="/ayam_segar.png"
                         alt="Event"
@@ -907,7 +908,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden">
                       <img
                         src="/buah_tempatan.png"
                         alt="Event"
@@ -928,10 +929,10 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 {/* View Event Calendar Button */}
                 <button
                   onClick={() => setIsExpiryModalOpen(true)}
-                  className="w-full border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  className="w-full border border-blue-200/80 hover:bg-blue-50 text-blue-800 text-xs font-bold py-2.5 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <span>View event calendar</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                  <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
                 </button>
               </div>
 
@@ -941,7 +942,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
       </div>
 
       {/* ======================================================== */}
-      {/* 🌟 MODALS FOR SYSTEM INTERACTION                         */}
+      {/* 🌟 MODALS FOR SYSTEM INTERACTION (HARMONIZED COLOR SCHEME) */}
       {/* ======================================================== */}
 
       {/* 1. MODAL: AGIH SUBSIDI MATA */}
@@ -950,7 +951,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
           <div className="bg-white rounded-[32px] w-full max-w-lg p-6 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-[#1b4332] flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
                   <Gift className="w-5 h-5" />
                 </div>
                 <div>
@@ -985,7 +986,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 <select
                   value={grantTarget}
                   onChange={(e) => setGrantTarget(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="ALL">Semua Ahli Berdaftar ({members.length} Orang)</option>
                   {members.map((m) => (
@@ -1007,7 +1008,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                     min="1"
                     value={amountRM}
                     onChange={(e) => setAmountRM(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -1021,7 +1022,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(e.target.value)}
                     placeholder="YYYY-MM-DD HH:mm"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -1035,26 +1036,26 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                   type="text"
                   value={campaignName}
                   onChange={(e) => setCampaignName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2d6a4f]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
-              <div className="bg-[#f0f7f3] border border-[#c4e3cb] p-3 rounded-2xl flex items-center justify-between">
+              <div className="bg-blue-50/80 border border-blue-200 p-3 rounded-2xl flex items-center justify-between">
                 <div>
                   <span className="text-slate-500 text-[10px]">Jumlah Diagihkan:</span>
-                  <p className="font-mono font-black text-[#1b4332] text-sm">
+                  <p className="font-mono font-black text-blue-900 text-sm">
                     {totalPointsToDistribute.toLocaleString()} Mata (RM {totalRMToDistribute.toFixed(2)})
                   </p>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded-full">
                   {totalTargetCount} Penerima
                 </span>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#1b4332] hover:bg-[#255741] text-white font-black text-xs py-3 rounded-2xl transition cursor-pointer shadow-md"
+                className="w-full btn-gradient-blue text-white font-black text-xs py-3 rounded-2xl transition cursor-pointer shadow-md"
               >
                 Sahkan & Agihkan Mata Subsidi
               </button>
@@ -1126,7 +1127,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               <button
                 type="button"
                 onClick={() => handleApplyExtension('ALL')}
-                className="bg-[#2d6a4f] text-white font-bold text-xs px-3 py-1 rounded-lg cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1 rounded-lg cursor-pointer transition"
               >
                 Kemas Kini Semua
               </button>
@@ -1145,7 +1146,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {members.map((m) => (
-                    <tr key={m.id} className="hover:bg-slate-50">
+                    <tr key={m.id} className="hover:bg-blue-50/30">
                       <td className="py-2.5 px-3">
                         <span className="font-bold text-slate-900 block">{m.name}</span>
                         <span className="text-[10px] text-slate-400 font-mono">{m.cardId}</span>
@@ -1160,14 +1161,14 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleApplyExtension(m.id)}
-                            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer"
+                            className="bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition"
                           >
                             + Lanjut
                           </button>
                           {m.points > 0 && (
                             <button
                               onClick={() => handleExpireSingle(m.id, m.name)}
-                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer"
+                              className="bg-rose-50 text-rose-700 hover:bg-rose-100 text-[10px] font-bold px-2 py-0.5 rounded-md cursor-pointer transition"
                             >
                               Lupuskan
                             </button>
@@ -1227,7 +1228,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {claims.map((clm) => (
-                      <tr key={clm.id} className="hover:bg-slate-50">
+                      <tr key={clm.id} className="hover:bg-blue-50/30">
                         <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
                           {clm.id}
                         </td>
@@ -1253,7 +1254,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                           {clm.status !== 'PAID' ? (
                             <button
                               onClick={() => onApproveClaim(clm.id)}
-                              className="bg-[#2d6a4f] hover:bg-[#1e4a38] text-white font-bold text-[10px] px-3 py-1 rounded-lg transition cursor-pointer"
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] px-3 py-1 rounded-lg transition cursor-pointer shadow-xs"
                             >
                               Luluskan
                             </button>
