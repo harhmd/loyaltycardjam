@@ -13,8 +13,23 @@ export const INITIAL_EVENT_LOCATIONS: EventLocation[] = [
     subsidyAmountRM: 10.0,
     subsidyPoints: 1000,
     totalQuota: 1000,
-    claimedCount: 432,
+    claimedCount: 432, // Baki 568 kuota
     description: 'Program Jualan Agro MADANI Kebangsaan di Presint 2 menawarkan subsidi RM10 (1,000 Mata) bagi pembelian barangan segar terus dari ladang.',
+  },
+  {
+    id: 'EVT-BANGI',
+    name: 'Jualan Agro MADANI Bandar Baru Bangi',
+    venue: 'Laman Niaga Seksyen 8, Bandar Baru Bangi',
+    state: 'Selangor',
+    dateStr: '06 Nov 2026 (Hari Ini)',
+    startTime: '08:30',
+    endTime: '17:30',
+    status: 'ACTIVE',
+    subsidyAmountRM: 10.0,
+    subsidyPoints: 1000,
+    totalQuota: 300,
+    claimedCount: 300, // KUOTA HABIS DITEBUS (100% Penuh - First-Come First-Served)
+    description: 'Acara sedang berlangsung tetapi kuota subsidi 300/300 penerima telah habis ditebus sepenuhnya. Pengguna seterusnya tidak dapat menuntut mata.',
   },
   {
     id: 'EVT-SERDANG',
@@ -27,9 +42,9 @@ export const INITIAL_EVENT_LOCATIONS: EventLocation[] = [
     status: 'ACTIVE',
     subsidyAmountRM: 10.0,
     subsidyPoints: 1000,
-    totalQuota: 1500,
-    claimedCount: 812,
-    description: 'Jualan Agro MADANI berskala besar di MAEPS Serdang. Tebus subsidi RM10 dan gunakan kod QR anda di semua gerai peniaga.',
+    totalQuota: 1000,
+    claimedCount: 999, // Baki 1 Kuota Sahaja (Bagus untuk uji habis terus)
+    description: 'Jualan Agro MADANI di MAEPS Serdang. Baki kuota tinggal 1 orang sahaja sebelum peruntukan ditutup secara automatik.',
   },
   {
     id: 'EVT-SELAYANG',

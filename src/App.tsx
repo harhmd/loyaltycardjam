@@ -546,6 +546,15 @@ export const App: React.FC = () => {
       };
     }
 
+    // Quota Enforcement: First-Come, First-Served Basis
+    const currentEventInState = events.find((e) => e.id === eventId) || event;
+    if (currentEventInState.claimedCount >= currentEventInState.totalQuota) {
+      return {
+        success: false,
+        message: `Maaf, kuota subsidi (${currentEventInState.totalQuota.toLocaleString()} kuota) bagi lokasi "${currentEventInState.name}" telah habis ditebus sepenuhnya berdasarkan giliran terawal (First-Come, First-Served). Pengguna seterusnya tidak dapat menuntut mata di lokasi ini.`,
+      };
+    }
+
     // 1 Claim per IC per Event check (Anti-Fraud)
     const alreadyClaimed = members.some(
       (m) =>

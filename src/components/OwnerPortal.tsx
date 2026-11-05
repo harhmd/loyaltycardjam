@@ -935,6 +935,27 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                             <p className="text-[10px] text-slate-500 font-mono truncate">
                               {evt.dateStr} • {evt.startTime} - {evt.endTime}
                             </p>
+                            <div className="flex items-center gap-2 mt-0.5 text-[9px]">
+                              <span
+                                className={`font-mono font-bold ${
+                                  evt.claimedCount >= evt.totalQuota
+                                    ? 'text-rose-600 font-black'
+                                    : 'text-slate-600'
+                                }`}
+                              >
+                                Kuota: {evt.claimedCount}/{evt.totalQuota}
+                              </span>
+                              {evt.claimedCount >= evt.totalQuota && (
+                                <span className="bg-rose-100 text-rose-800 font-black px-1.5 py-0.2 rounded text-[8px] uppercase">
+                                  Habis (Penuh)
+                                </span>
+                              )}
+                              {evt.totalQuota - evt.claimedCount > 0 && evt.status === 'ACTIVE' && (
+                                <span className="text-emerald-700 font-semibold">
+                                  (Baki: {evt.totalQuota - evt.claimedCount})
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
 
