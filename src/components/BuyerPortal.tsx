@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Member, Seller, Transaction, ProductItem } from '../types';
+import { Member, Seller, Transaction, ProductItem, EventLocation } from '../types';
 import { INITIAL_PRODUCTS, playCashierChime } from '../store';
 import { CameraQrScanner } from './CameraQrScanner';
+import { MyDigitalIdAuthModal } from './MyDigitalIdAuthModal';
+import { ClaimPointsModal } from './ClaimPointsModal';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import {
@@ -24,12 +26,16 @@ import {
   ShoppingBag,
   ChevronLeft,
   Sparkles,
-  Tag,
-  Zap,
-  Flame,
   Clock,
   AlertTriangle,
-  Calendar
+  Gift,
+  MapPin,
+  Lock,
+  UserCheck,
+  RefreshCw,
+  LogOut,
+  Maximize2,
+  X
 } from 'lucide-react';
 
 interface BuyerPortalProps {
@@ -45,6 +51,19 @@ interface BuyerPortalProps {
     note: string
   ) => { success: boolean; message?: string; transaction?: Transaction };
   transactions: Transaction[];
+  events?: EventLocation[];
+  onClaimEventPoints?: (
+    eventId: string,
+    event: EventLocation
+  ) => { success: boolean; message: string };
+  onAuthenticateMyDigitalId?: (userData: {
+    nama: string;
+    nric: string;
+    phone: string;
+    memberId?: string;
+  }) => void;
+  onLogoutMyDigitalId?: () => void;
+  onToggleEventStatus?: (eventId: string) => void;
 }
 
 export const BuyerPortal: React.FC<BuyerPortalProps> = ({
@@ -55,6 +74,11 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
   products = INITIAL_PRODUCTS,
   onMakePayment,
   transactions,
+  events = [],
+  onClaimEventPoints,
+  onAuthenticateMyDigitalId,
+  onLogoutMyDigitalId,
+  onToggleEventStatus,
 }) => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<'CAMERA' | 'MANUAL'>('CAMERA');
@@ -68,11 +92,39 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
 
+  // Modals for MyDigital ID, Claim Points, and Fullscreen QR
+  const [isMyIdModalOpen, setIsMyIdModalOpen] = useState(false);
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isBuyerQrModalOpen, setIsBuyerQrModalOpen] = useState(false);
+
   const parsedAmountRM = parseFloat(amountRM) || 0;
   const pointsNeeded = Math.round(parsedAmountRM * 100);
-  const canAfford = currentMember.points >= pointsNeeded && pointsNeeded > 0;
 
-  const [historyFilter, setHistoryFilter] = useState<'ALL' | 'PAYMENT' | 'OWNER_GRANT' | 'EXPIRY'>('ALL');
+  // Active event lookup
+  const activeEvent =
+    events.find((e) => e.id === currentMember.activeEventId) ||
+    events.find((e) => e.status === 'ACTIVE') ||
+    events[0];
+
+  const isEventEnded =
+    activeEvent?.status === 'ENDED' ||
+    (currentMember.points === 0 && (currentMember.expiredPointsTotal || 0) > 0);
+
+  const hasClaimed =
+    (currentMember.claimedEvents && currentMember.claimedEvents.length > 0) ||
+    currentMember.points > 0;
+
+  const isMyIdVerified = currentMember.isMyDigitalIdVerified ?? false;
+
+  const canAfford =
+    isMyIdVerified &&
+    !isEventEnded &&
+    currentMember.points >= pointsNeeded &&
+    pointsNeeded > 0;
+
+  const [historyFilter, setHistoryFilter] = useState<
+    'ALL' | 'PAYMENT' | 'OWNER_GRANT' | 'EXPIRY'
+  >('ALL');
 
   const memberTransactions = transactions.filter(
     (t) => t.memberId === currentMember.id
@@ -112,7 +164,9 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
 
     if (matched) {
       setSelectedSellerId(matched.id);
-      setCameraScanSuccessMsg(`Kod QR Dikesan: Gerai ${matched.stallNumber} - ${matched.businessName}`);
+      setCameraScanSuccessMsg(
+        `Kod QR Dikesan: Gerai ${matched.stallNumber} - ${matched.businessName}`
+      );
       setPaymentError('');
       playCashierChime();
       setScannerMode('MANUAL');
@@ -123,6 +177,20 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
 
   // One-click quick redeem from product card
   const handleSelectProduct = (product: ProductItem) => {
+    if (!isMyIdVerified) {
+      setIsMyIdModalOpen(true);
+      return;
+    }
+    if (!hasClaimed) {
+      setIsClaimModalOpen(true);
+      return;
+    }
+    if (isEventEnded) {
+      setPaymentError(
+        'Acara di lokasi ini telah tamat. Mata subsidi telah luput secara automatik.'
+      );
+      return;
+    }
     setSelectedSellerId(product.sellerId);
     setAmountRM(product.priceRM.toFixed(2));
     setNote(`Tebus: ${product.name}`);
@@ -135,6 +203,27 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
   const handleQuickPay = (e: React.FormEvent) => {
     e.preventDefault();
     setPaymentError('');
+
+    if (!isMyIdVerified) {
+      setPaymentError('Sila log masuk menggunakan MyDigital ID terlebih dahulu.');
+      setIsMyIdModalOpen(true);
+      return;
+    }
+
+    if (isEventEnded) {
+      setPaymentError(
+        'Mata ganjaran telah tamat tempoh seiring dengan berakhirnya acara di lokasi ini dan tidak sah digunakan lagi.'
+      );
+      return;
+    }
+
+    if (!hasClaimed || currentMember.points <= 0) {
+      setPaymentError(
+        'Anda belum menuntut mata subsidi untuk acara ini. Sila tekan "Tuntut Mata Subsidi".'
+      );
+      setIsClaimModalOpen(true);
+      return;
+    }
 
     if (!selectedSellerId) {
       setPaymentError('Sila pilih gerai peniaga yang ingin diimbas.');
@@ -159,7 +248,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
       currentMember.id,
       selectedSellerId,
       parsedAmountRM,
-      note || 'Belian barangan di Jualan Agro MADANI'
+      note || `Belian di ${selectedSellerObj?.businessName || 'Gerai JAM'}`
     );
 
     if (res.success && res.transaction) {
@@ -180,6 +269,11 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
 
   const selectedSellerObj = sellers.find((s) => s.id === selectedSellerId);
 
+  // Buyer QR Payload containing Member ID, IC, and Active Event
+  const buyerQrPayload = `JAM-LOYALTY:${currentMember.id}:${currentMember.icNumber || ''}:${
+    activeEvent?.id || 'EVENT-GENERAL'
+  }`;
+
   return (
     <div className="max-w-[420px] mx-auto bg-[#f0f7ff] min-h-[760px] rounded-[44px] shadow-2xl border-4 border-white overflow-hidden flex flex-col relative select-none">
       
@@ -190,7 +284,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
         <div className="absolute bottom-0 left-0 w-36 h-36 bg-blue-400/30 rounded-full blur-2xl pointer-events-none"></div>
 
         {/* Top Navbar Row */}
-        <div className="flex items-center justify-between relative z-10 mb-4">
+        <div className="flex items-center justify-between relative z-10 mb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white shadow-sm">
               <Grid className="w-4 h-4" />
@@ -227,9 +321,64 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
           </div>
         </div>
 
+        {/* MyDigital ID SSO Status Banner in Header */}
+        <div className="relative z-10 mb-3">
+          {isMyIdVerified ? (
+            <div className="bg-white/20 backdrop-blur-md border border-cyan-300/40 rounded-2xl px-3 py-2 flex items-center justify-between text-xs shadow-xs">
+              <div className="flex items-center gap-2">
+                {/* Official mini MyDigital ID badge */}
+                <div className="bg-white px-2 py-0.5 rounded-lg flex items-center gap-1 shrink-0 shadow-2xs">
+                  <span className="text-[#002f6c] font-black text-[10px] leading-none">my</span>
+                  <span className="text-[#004b99] font-black text-[10px] leading-none">digital</span>
+                  <span className="bg-cyan-500 text-white font-black px-1 py-0.2 rounded text-[8px] leading-none">ID</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-cyan-100 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-cyan-300" /> Disahkan Kerajaan Malaysia
+                  </p>
+                  <p className="text-[9px] font-mono text-cyan-200">
+                    MyKad: {currentMember.icNumber || '850412-10-5432'}
+                  </p>
+                </div>
+              </div>
+
+              {onLogoutMyDigitalId && (
+                <button
+                  onClick={onLogoutMyDigitalId}
+                  className="text-[10px] text-cyan-200 hover:text-white underline font-semibold cursor-pointer shrink-0"
+                >
+                  Tukar / Keluar
+                </button>
+              )}
+            </div>
+          ) : (
+            <div
+              onClick={() => setIsMyIdModalOpen(true)}
+              className="bg-amber-400/25 hover:bg-amber-400/35 backdrop-blur-md border border-amber-300/60 rounded-2xl px-3 py-2 flex items-center justify-between text-xs cursor-pointer transition shadow-xs"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold shrink-0 animate-pulse">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-amber-100 leading-tight">
+                    Log Masuk MyDigital ID Diperlukan
+                  </p>
+                  <p className="text-[9px] text-amber-200/90">
+                    Klik untuk sahkan MyKad & tebus subsidi RM10
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full uppercase tracking-tight shadow-2xs">
+                Log Masuk ➔
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Search Bar Pill */}
         <div className="relative z-10">
-          <div className="flex items-center bg-white/95 rounded-full px-4 py-2.5 shadow-md shadow-blue-900/10 border border-white">
+          <div className="flex items-center bg-white/95 rounded-full px-4 py-2 shadow-md shadow-blue-900/10 border border-white">
             <Search className="w-4 h-4 text-blue-600 mr-2 shrink-0" />
             <input
               type="text"
@@ -245,7 +394,11 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
       {/* 2. STUNNING LUXURY LOYALTY CARD BLENDED WITH JAM LOGO & FRESH PRODUCE ARTWORK */}
       <div className="-mt-8 px-4 relative z-20">
         <div
-          className="rounded-[36px] border-2 border-amber-300/70 shadow-2xl relative overflow-hidden text-white transition-all duration-300 hover:shadow-emerald-900/30"
+          className={`rounded-[36px] border-2 shadow-2xl relative overflow-hidden text-white transition-all duration-300 ${
+            isEventEnded
+              ? 'border-rose-400/80 grayscale-[20%]'
+              : 'border-amber-300/70 hover:shadow-emerald-900/30'
+          }`}
           style={{
             backgroundImage: "url('/jam-card-luxury.jpg')",
             backgroundSize: 'cover',
@@ -253,7 +406,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
           }}
         >
           {/* Multi-layered Glassmorphic Scrim for High Contrast & Text Legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-950/30 pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/75 to-slate-950/40 pointer-events-none"></div>
           <div className="absolute inset-0 card-gloss-shimmer pointer-events-none"></div>
 
           <div className="relative z-10 p-5 flex flex-col justify-between min-h-[250px]">
@@ -275,19 +428,38 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                 </div>
               </div>
 
-              {/* QR Code Plaque with Golden Border */}
-              <div className="bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border-2 border-amber-300 shadow-lg shrink-0">
+              {/* QR Code Plaque with Golden Border - Clickable for Fullscreen QR */}
+              <div
+                onClick={() => setIsBuyerQrModalOpen(true)}
+                title="Tekan untuk paparan QR penuh"
+                className={`bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border-2 shadow-lg shrink-0 cursor-pointer relative group transition hover:scale-105 ${
+                  isEventEnded ? 'border-rose-400' : 'border-amber-300'
+                }`}
+              >
                 <QRCodeSVG
-                  value={currentMember.cardId}
-                  size={38}
+                  value={buyerQrPayload}
+                  size={42}
                   bgColor="transparent"
-                  fgColor="#0f172a"
+                  fgColor={isEventEnded ? '#991b1b' : '#0f172a'}
                 />
+                {isEventEnded && (
+                  <div className="absolute inset-0 bg-rose-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
+                    <Lock className="w-4 h-4 text-rose-300" />
+                  </div>
+                )}
+                {!hasClaimed && !isEventEnded && (
+                  <div className="absolute inset-0 bg-amber-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
+                    <Gift className="w-4 h-4 text-amber-300 animate-bounce" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                  <Maximize2 className="w-2.5 h-2.5" />
+                </div>
               </div>
             </div>
 
             {/* Middle Section: Smart Chip Motif + Balance */}
-            <div className="my-3">
+            <div className="my-2.5">
               <div className="flex items-center gap-2 mb-1.5">
                 {/* Gold EMV Chip Graphic */}
                 <div className="w-8 h-6 rounded-md bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 border border-amber-200 shadow-xs flex items-center justify-center p-0.5">
@@ -304,60 +476,76 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                 <span className="text-[10px] text-slate-300 font-mono">• Baki Mata</span>
               </div>
 
-              {/* Points & RM */}
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight drop-shadow-md">
-                  {currentMember.points.toLocaleString()}
-                </span>
-                <span className="text-xs font-black text-amber-300 uppercase tracking-widest drop-shadow">
-                  Mata
-                </span>
-              </div>
-
-              {/* Cash Equivalent in Ringgit Malaysia */}
-              <div className="inline-flex items-center gap-1.5 mt-1 bg-black/55 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-md">
-                <span className="text-[11px] text-slate-300 font-medium">Nilai Tebus:</span>
-                <span className="text-sm font-black text-emerald-300 font-mono">
-                  RM {(currentMember.points / 100).toFixed(2)}
-                </span>
-                <span className="text-[10px] text-amber-300/90 font-mono">
-                  (1 Mata = 1 Sen)
-                </span>
-              </div>
+              {/* Points & RM Display based on Claim & Event Status */}
+              {isEventEnded ? (
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black font-mono text-rose-300 tracking-tight drop-shadow-md">
+                      0
+                    </span>
+                    <span className="text-xs font-black text-rose-400 uppercase tracking-widest drop-shadow">
+                      Mata (Tamat Acara)
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 mt-1 bg-rose-950/80 backdrop-blur-md px-3 py-1 rounded-full border border-rose-400/40 shadow-md">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                    <span className="text-[10px] text-rose-200 font-bold">
+                      Mata subsidi telah luput secara automatik kerana acara telah tamat.
+                    </span>
+                  </div>
+                </div>
+              ) : !hasClaimed ? (
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black font-mono text-slate-300 tracking-tight drop-shadow-md">
+                      0
+                    </span>
+                    <span className="text-xs font-black text-amber-300 uppercase tracking-widest drop-shadow">
+                      Mata
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 mt-1 bg-amber-950/80 backdrop-blur-md px-3 py-1 rounded-full border border-amber-400/40 shadow-md">
+                    <Gift className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="text-[10px] text-amber-200 font-bold">
+                      Tekan "Tuntut Mata Subsidi" untuk menerima RM 10.00
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-black font-mono text-white tracking-tight drop-shadow-md">
+                      {currentMember.points.toLocaleString()}
+                    </span>
+                    <span className="text-xs font-black text-amber-300 uppercase tracking-widest drop-shadow">
+                      Mata
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 mt-1 bg-black/55 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-md">
+                    <span className="text-[11px] text-slate-300 font-medium">Nilai Tebus:</span>
+                    <span className="text-sm font-black text-emerald-300 font-mono">
+                      RM {(currentMember.points / 100).toFixed(2)}
+                    </span>
+                    <span className="text-[10px] text-amber-300/90 font-mono">
+                      (1 Mata = 1 Sen)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Real Product Picture Pills (NO FREE ICONS, REAL PICTURES) */}
+            {/* Approved Event Location Tag on Card */}
             <div className="flex items-center gap-1.5 flex-wrap my-1">
-              <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/25 shadow-xs">
-                <img
-                  src="/ayam_segar.png"
-                  alt="Ayam Segar"
-                  className="w-4 h-4 rounded-full object-cover border border-amber-300 shrink-0"
-                />
-                <span className="text-[9px] font-extrabold text-white tracking-wide">
-                  Ayam Segar
-                </span>
-              </div>
-
-              <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/25 shadow-xs">
-                <img
-                  src="/telur_ayam.png"
-                  alt="Telur Ayam"
-                  className="w-4 h-4 rounded-full object-cover border border-amber-300 shrink-0"
-                />
-                <span className="text-[9px] font-extrabold text-white tracking-wide">
-                  Telur Gred A
-                </span>
-              </div>
-
-              <div className="inline-flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/25 shadow-xs">
-                <img
-                  src="/buah_tempatan.png"
-                  alt="Buah Tempatan"
-                  className="w-4 h-4 rounded-full object-cover border border-amber-300 shrink-0"
-                />
-                <span className="text-[9px] font-extrabold text-white tracking-wide">
-                  Buah Tempatan
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md border shadow-xs ${
+                  isEventEnded
+                    ? 'bg-rose-950/70 border-rose-400/40 text-rose-200'
+                    : 'bg-emerald-950/75 border-emerald-400/40 text-emerald-200'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                <span className="text-[10px] font-extrabold tracking-wide truncate max-w-[280px]">
+                  {activeEvent?.name || currentMember.activeEventName || 'Lokasi: Belum Dituntut'}
                 </span>
               </div>
             </div>
@@ -366,16 +554,20 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
             <div className="flex items-center justify-between text-[10px] mt-1 pt-1.5 border-t border-white/10">
               <div
                 className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full backdrop-blur-md border ${
-                  currentMember.points === 0 && (currentMember.expiredPointsTotal || 0) > 0
+                  isEventEnded
                     ? 'bg-rose-950/80 text-rose-300 border-rose-400/40'
                     : 'bg-black/60 text-amber-200 border-amber-300/40'
                 }`}
               >
                 <Clock className="w-3 h-3 text-amber-300 shrink-0" />
                 <span className="font-bold text-[9px] tracking-tight">
-                  {currentMember.points === 0 && (currentMember.expiredPointsTotal || 0) > 0
-                    ? `Status: Telah Luput`
-                    : `Sah Sehingga: ${currentMember.pointsExpiryDate || '08 Nov 2026, 18:00'}`}
+                  {isEventEnded
+                    ? `Status: Acara Selesai (Mata Luput)`
+                    : `Sah Sehingga Acara Selesai: ${
+                        activeEvent?.endTime
+                          ? `${activeEvent.endTime} Hari Ini`
+                          : currentMember.pointsExpiryDate || '18:00'
+                      }`}
                 </span>
               </div>
               <span className="text-[9px] text-emerald-300 font-bold flex items-center gap-1">
@@ -387,7 +579,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
             <div className="pt-2 border-t border-white/15 flex items-center justify-between text-[11px]">
               <div>
                 <p className="text-[9px] uppercase tracking-wider text-slate-300 font-medium">
-                  Nama Ahli
+                  Nama Ahli MyDigital ID
                 </p>
                 <p className="font-extrabold text-white text-xs truncate max-w-[180px] drop-shadow-xs">
                   {currentMember.name}
@@ -395,7 +587,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
               </div>
               <div className="text-right">
                 <p className="text-[9px] uppercase tracking-wider text-slate-300 font-medium">
-                  No. Kad
+                  No. Kad Ahli
                 </p>
                 <p className="font-mono font-black text-amber-300 tracking-wider">
                   {currentMember.cardId}
@@ -409,8 +601,123 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
       {/* 3. MAIN BODY CONTENT */}
       <div className="flex-1 px-5 pt-3 pb-24 overflow-y-auto space-y-4">
         
+        {/* ACTION BUTTON BAR: Tuntut Mata / Imbas QR Gerai / Tunjuk QR Saya */}
+        <div className="space-y-2">
+          {!isMyIdVerified ? (
+            /* Button 1: Authenticate via MyDigital ID */
+            <button
+              onClick={() => setIsMyIdModalOpen(true)}
+              className="w-full py-3.5 px-5 bg-gradient-to-r from-[#002f6c] via-[#004b99] to-[#0070ba] hover:from-[#002555] hover:to-[#005e9e] text-white rounded-full font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg shadow-blue-900/25 active:scale-[0.98] transition cursor-pointer"
+            >
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-300" />
+              </div>
+              <span>Log Masuk MyDigital ID (SSO)</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-cyan-200" />
+            </button>
+          ) : !hasClaimed ? (
+            /* Button 2: Claim Points for Approved Event Location */
+            <button
+              onClick={() => setIsClaimModalOpen(true)}
+              className="w-full py-3.5 px-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-full font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-600/30 active:scale-[0.98] transition cursor-pointer animate-pulse"
+            >
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <Gift className="w-3.5 h-3.5 text-amber-300" />
+              </div>
+              <span>Tuntut Mata Subsidi JAM (1,000 Mata)</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-amber-200" />
+            </button>
+          ) : (
+            /* Button 3: Double Action: Scan Stall QR or Show My QR */
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setPaymentError('');
+                  setCameraScanSuccessMsg('');
+                  setSelectedSellerId('');
+                  setScannerMode('CAMERA');
+                  setIsScannerOpen(true);
+                }}
+                disabled={isEventEnded}
+                className={`py-3 px-3 rounded-full font-extrabold text-[11px] uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer ${
+                  isEventEnded
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                    : 'btn-gradient-blue text-white shadow-blue-500/25 active:scale-[0.98]'
+                }`}
+              >
+                <Scan className="w-4 h-4" />
+                <span>Imbas QR Gerai</span>
+              </button>
+
+              <button
+                onClick={() => setIsBuyerQrModalOpen(true)}
+                className="py-3 px-3 bg-white hover:bg-slate-50 text-slate-800 border-2 border-blue-600/30 rounded-full font-extrabold text-[11px] uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition cursor-pointer"
+              >
+                <QrCode className="w-4 h-4 text-blue-600" />
+                <span>Papar QR Saya</span>
+              </button>
+            </div>
+          )}
+
+          {/* Quick Event Switcher & Simulator Pill */}
+          <div className="glass-card bg-white/80 rounded-2xl p-2.5 border border-slate-200/80 flex items-center justify-between text-xs shadow-2xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+                  isEventEnded
+                    ? 'bg-rose-100 text-rose-700'
+                    : 'bg-emerald-100 text-emerald-700'
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-slate-500 font-bold uppercase truncate">
+                  Lokasi Acara: {activeEvent?.name || 'JAM Malaysia'}
+                </p>
+                <p className="text-[11px] font-black text-slate-800 truncate">
+                  {isEventEnded ? (
+                    <span className="text-rose-600 font-bold">
+                      Acara Telah Tamat (Mata Tidak Sah)
+                    </span>
+                  ) : (
+                    <span className="text-emerald-700 font-bold">
+                      Sedang Berlangsung ({activeEvent?.startTime} - {activeEvent?.endTime})
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsClaimModalOpen(true)}
+                className="text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded-xl transition cursor-pointer"
+              >
+                Tukar Lokasi
+              </button>
+
+              {onToggleEventStatus && activeEvent && (
+                <button
+                  type="button"
+                  title="Klik untuk uji simulasi tamat masa acara secara langsung"
+                  onClick={() => onToggleEventStatus(activeEvent.id)}
+                  className={`text-[9px] font-black px-2 py-1 rounded-xl transition cursor-pointer ${
+                    activeEvent.status === 'ACTIVE'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                      : 'bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200'
+                  }`}
+                >
+                  {activeEvent.status === 'ACTIVE' ? 'Uji Tamat' : 'Aktifkan Semula'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Had Tempoh Mata Kad Status Banner */}
-        {currentMember.points === 0 && (currentMember.expiredPointsTotal || 0) > 0 ? (
+        {isEventEnded ? (
           <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3 flex items-start gap-2.5 shadow-sm text-xs">
             <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
             <div>
@@ -418,30 +725,11 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                 Mata Telah Tamat Tempoh & Dilupuskan
               </p>
               <p className="text-[11px] text-rose-700 mt-0.5">
-                Sebanyak <strong className="font-black text-rose-950 font-mono">{(currentMember.expiredPointsTotal || 0).toLocaleString()} Mata (RM {((currentMember.expiredPointsTotal || 0) / 100).toFixed(2)})</strong> telah melepasi had masa kempen dan dilupuskan secara automatik.
+                Acara di lokasi ini telah selesai. Mengikut peraturan rasmi Jualan Agro MADANI, sebarang baki mata yang tidak dibelanjakan akan dilupuskan secara automatik dan kod QR tidak lagi boleh digunakan.
               </p>
             </div>
           </div>
-        ) : (
-          <div className="glass-card bg-amber-50/80 border border-amber-200/90 rounded-2xl p-2.5 flex items-center justify-between text-xs shadow-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-800 flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4 text-amber-700" />
-              </div>
-              <div>
-                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">
-                  Had Masa Mata Subsidi
-                </p>
-                <p className="text-xs font-black text-slate-800 font-mono">
-                  {currentMember.pointsExpiryDate || '08 Nov 2026, 18:00'}
-                </p>
-              </div>
-            </div>
-            <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
-              Aktif
-            </span>
-          </div>
-        )}
+        ) : null}
 
         {activeNav === 'HISTORY' ? (
           /* FULL TRANSACTION HISTORY TAB VIEW */
@@ -563,249 +851,239 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
         ) : (
           /* HOME TAB CONTENT */
           <>
-            {/* Quick Action: BIG GLOSSY BLUE "IMBAS & BAYAR" BUTTON */}
-            <button
-              onClick={() => {
-                setPaymentError('');
-                setCameraScanSuccessMsg('');
-                setSelectedSellerId('');
-                setScannerMode('CAMERA');
-                setIsScannerOpen(true);
-              }}
-              className="w-full btn-gradient-blue text-white py-3.5 px-5 rounded-full font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2.5 shadow-lg shadow-blue-500/25 active:scale-[0.98] transition cursor-pointer"
-            >
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                <Scan className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span>Imbas & Bayar QR Gerai</span>
-              <ChevronRight className="w-4 h-4 ml-auto text-blue-200" />
-            </button>
-
-        {/* Horizontal Category Frosted Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-2xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
-                selectedCategory === cat
-                  ? 'btn-gradient-blue text-white shadow-sm'
-                  : 'glass-pill text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* 🌟 DEDICATED VISUAL CARDS: PRODUK SEGAR UTAMA (Chicken, Eggs, Fruits) */}
-        <div>
-          <div className="flex items-center justify-between mb-2.5 px-1">
-            <div>
-              <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                <img
-                  src="/logo-jam.png"
-                  alt="JAM"
-                  className="h-4 w-auto object-contain"
-                />
-                Barangan Segar Pilihan JAM
-              </h3>
-              <p className="text-[10px] text-slate-500">
-                Pilih barangan untuk tebus automatik guna mata JAM anda
-              </p>
-            </div>
-            <span className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
-              {filteredProducts.length} Produk
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {filteredProducts.map((prod) => (
-              <div
-                key={prod.id}
-                onClick={() => handleSelectProduct(prod)}
-                className="bg-white rounded-[26px] p-3.5 border border-white shadow-sm hover:shadow-md hover:border-blue-200 transition cursor-pointer relative flex items-center gap-3.5 group"
-              >
-                {/* 3D Product Image / Visual Frame */}
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-50 to-blue-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner p-1">
-                  <img
-                    src={prod.imageUrl || '/card-produce-banner.png'}
-                    alt={prod.name}
-                    className="w-full h-full object-cover rounded-xl group-hover:scale-108 transition-transform duration-300"
-                  />
-                  <div className="absolute top-1 left-1">
-                    <span className="text-[8px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-md shadow-2xs uppercase">
-                      JAM
-                    </span>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
-                      {prod.badge}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-extrabold text-slate-900 mt-1 line-clamp-1 leading-snug">
-                    {prod.name}
-                  </h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    Gerai {prod.stallNumber} • {prod.sellerName.split(' ')[0]}
-                  </p>
-
-                  <div className="mt-1.5 flex items-baseline gap-2">
-                    <span className="text-sm font-black text-blue-600 font-mono">
-                      {prod.pointsNeeded.toLocaleString()} Mata
-                    </span>
-                    <span className="text-[11px] font-bold text-slate-700 font-mono">
-                      (RM {prod.priceRM.toFixed(2)})
-                    </span>
-                    <span className="text-[10px] text-slate-400 line-through">
-                      RM {prod.originalPriceRM.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Redeem CTA Pill */}
-                <div className="shrink-0 self-center">
-                  <button
-                    type="button"
-                    className="w-8 h-8 rounded-full btn-gradient-blue text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-110 transition"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Gerai JAM Stalls List */}
-        <div>
-          <div className="flex items-center justify-between mb-2 px-1">
-            <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5 text-blue-600" /> Gerai Peniaga Sedia Imbas ({filteredSellers.length})
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {filteredSellers.map((seller) => (
-              <div
-                key={seller.id}
-                onClick={() => {
-                  setSelectedSellerId(seller.id);
-                  setIsScannerOpen(true);
-                }}
-                className="bg-white rounded-[24px] p-3.5 border border-white shadow-xs hover:shadow-md transition cursor-pointer relative group flex flex-col justify-between"
-              >
-                <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                  <Heart className="w-3.5 h-3.5 fill-blue-600" />
-                </div>
-
-                <div>
-                  <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-2 font-bold text-xs">
-                    {seller.stallNumber}
-                  </div>
-                  <h4 className="text-xs font-extrabold text-slate-900 line-clamp-1">
-                    {seller.businessName}
-                  </h4>
-                  <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
-                    {seller.category}
-                  </p>
-                </div>
-
-                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                    Guna Mata
-                  </span>
-                  <span className="text-[10px] font-bold text-blue-600 group-hover:translate-x-0.5 transition">
-                    Imbas ➔
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Transactions List */}
-        <div>
-          <div className="flex items-center justify-between mb-2 px-1">
-            <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5 text-blue-600" /> Aktiviti Mata Terkini
-            </h3>
-            <button
-              onClick={() => setActiveNav('HISTORY')}
-              className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
-            >
-              Lihat Semua ({memberTransactions.length}) ➔
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {memberTransactions.length === 0 ? (
-              <div className="glass-card rounded-2xl p-6 text-center text-slate-400 text-xs">
-                Tiada rekod penggunaan mata lagi.
-              </div>
-            ) : (
-              memberTransactions.slice(0, 3).map((tx) => (
-                <div
-                  key={tx.id}
-                  onClick={() => tx.type === 'PAYMENT' && setLastReceipt(tx)}
-                  className="bg-white/90 rounded-2xl p-3 border border-white shadow-xs flex items-center justify-between text-xs cursor-pointer hover:border-blue-200 transition"
+            {/* Horizontal Category Frosted Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3.5 py-1.5 rounded-2xl text-[11px] font-bold whitespace-nowrap transition cursor-pointer ${
+                    selectedCategory === cat
+                      ? 'btn-gradient-blue text-white shadow-sm'
+                      : 'glass-pill text-slate-600 hover:text-slate-900 hover:bg-white'
+                  }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                        tx.type === 'OWNER_GRANT'
-                          ? 'bg-amber-50 text-amber-600'
-                          : tx.type === 'EXPIRY'
-                          ? 'bg-rose-50 text-rose-600'
-                          : 'bg-blue-50 text-blue-600'
-                      }`}
-                    >
-                      {tx.type === 'OWNER_GRANT' ? (
-                        <ArrowDownLeft className="w-4 h-4" />
-                      ) : tx.type === 'EXPIRY' ? (
-                        <Clock className="w-4 h-4" />
-                      ) : (
-                        <ArrowUpRight className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-800 line-clamp-1">
-                        {tx.type === 'OWNER_GRANT'
-                          ? 'Subsidi Penganjur JAM'
-                          : tx.type === 'EXPIRY'
-                          ? 'Mata Luput Had Masa'
-                          : tx.sellerName}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {tx.timestamp.split(' ')[0]} • {tx.note}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p
-                      className={`font-black font-mono text-xs ${
-                        tx.type === 'OWNER_GRANT'
-                          ? 'text-emerald-600'
-                          : 'text-rose-600'
-                      }`}
-                    >
-                      {tx.type === 'OWNER_GRANT' ? '+' : '-'}
-                      {tx.amountPoints} Mata
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-mono">
-                      (RM {tx.amountRM.toFixed(2)})
-                    </p>
-                  </div>
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* 🌟 DEDICATED VISUAL CARDS: PRODUK SEGAR UTAMA */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5 px-1">
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                    <img
+                      src="/logo-jam.png"
+                      alt="JAM"
+                      className="h-4 w-auto object-contain"
+                    />
+                    Barangan Segar Pilihan JAM
+                  </h3>
+                  <p className="text-[10px] text-slate-500">
+                    Pilih barangan untuk tebus automatik guna mata JAM anda
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-        </>
+                <span className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer">
+                  {filteredProducts.length} Produk
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {filteredProducts.map((prod) => (
+                  <div
+                    key={prod.id}
+                    onClick={() => handleSelectProduct(prod)}
+                    className="bg-white rounded-[26px] p-3.5 border border-white shadow-sm hover:shadow-md hover:border-blue-200 transition cursor-pointer relative flex items-center gap-3.5 group"
+                  >
+                    {/* 3D Product Image / Visual Frame */}
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-50 to-blue-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner p-1">
+                      <img
+                        src={prod.imageUrl || '/card-produce-banner.png'}
+                        alt={prod.name}
+                        className="w-full h-full object-cover rounded-xl group-hover:scale-108 transition-transform duration-300"
+                      />
+                      <div className="absolute top-1 left-1">
+                        <span className="text-[8px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-md shadow-2xs uppercase">
+                          JAM
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
+                          {prod.badge}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-extrabold text-slate-900 mt-1 line-clamp-1 leading-snug">
+                        {prod.name}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Gerai {prod.stallNumber} • {prod.sellerName.split(' ')[0]}
+                      </p>
+
+                      <div className="mt-1.5 flex items-baseline gap-2">
+                        <span className="text-sm font-black text-blue-600 font-mono">
+                          {prod.pointsNeeded.toLocaleString()} Mata
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-700 font-mono">
+                          (RM {prod.priceRM.toFixed(2)})
+                        </span>
+                        <span className="text-[10px] text-slate-400 line-through">
+                          RM {prod.originalPriceRM.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Redeem CTA Pill */}
+                    <div className="shrink-0 self-center">
+                      <button
+                        type="button"
+                        className="w-8 h-8 rounded-full btn-gradient-blue text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-110 transition"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Gerai JAM Stalls List */}
+            <div>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                  <Store className="w-3.5 h-3.5 text-blue-600" /> Gerai Peniaga Sedia Imbas ({filteredSellers.length})
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {filteredSellers.map((seller) => (
+                  <div
+                    key={seller.id}
+                    onClick={() => {
+                      if (!isMyIdVerified) {
+                        setIsMyIdModalOpen(true);
+                        return;
+                      }
+                      if (!hasClaimed) {
+                        setIsClaimModalOpen(true);
+                        return;
+                      }
+                      setSelectedSellerId(seller.id);
+                      setIsScannerOpen(true);
+                    }}
+                    className="bg-white rounded-[24px] p-3.5 border border-white shadow-xs hover:shadow-md transition cursor-pointer relative group flex flex-col justify-between"
+                  >
+                    <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <Heart className="w-3.5 h-3.5 fill-blue-600" />
+                    </div>
+
+                    <div>
+                      <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-2 font-bold text-xs">
+                        {seller.stallNumber}
+                      </div>
+                      <h4 className="text-xs font-extrabold text-slate-900 line-clamp-1">
+                        {seller.businessName}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
+                        {seller.category}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        Guna Mata
+                      </span>
+                      <span className="text-[10px] font-bold text-blue-600 group-hover:translate-x-0.5 transition">
+                        Imbas ➔
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Transactions List */}
+            <div>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <h3 className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                  <History className="w-3.5 h-3.5 text-blue-600" /> Aktiviti Mata Terkini
+                </h3>
+                <button
+                  onClick={() => setActiveNav('HISTORY')}
+                  className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
+                >
+                  Lihat Semua ({memberTransactions.length}) ➔
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {memberTransactions.length === 0 ? (
+                  <div className="glass-card rounded-2xl p-6 text-center text-slate-400 text-xs">
+                    Tiada rekod penggunaan mata lagi.
+                  </div>
+                ) : (
+                  memberTransactions.slice(0, 3).map((tx) => (
+                    <div
+                      key={tx.id}
+                      onClick={() => tx.type === 'PAYMENT' && setLastReceipt(tx)}
+                      className="bg-white/90 rounded-2xl p-3 border border-white shadow-xs flex items-center justify-between text-xs cursor-pointer hover:border-blue-200 transition"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            tx.type === 'OWNER_GRANT'
+                              ? 'bg-amber-50 text-amber-600'
+                              : tx.type === 'EXPIRY'
+                              ? 'bg-rose-50 text-rose-600'
+                              : 'bg-blue-50 text-blue-600'
+                          }`}
+                        >
+                          {tx.type === 'OWNER_GRANT' ? (
+                            <ArrowDownLeft className="w-4 h-4" />
+                          ) : tx.type === 'EXPIRY' ? (
+                            <Clock className="w-4 h-4" />
+                          ) : (
+                            <ArrowUpRight className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 line-clamp-1">
+                            {tx.type === 'OWNER_GRANT'
+                              ? 'Subsidi Penganjur JAM'
+                              : tx.type === 'EXPIRY'
+                              ? 'Mata Luput Had Masa'
+                              : tx.sellerName}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            {tx.timestamp.split(' ')[0]} • {tx.note}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p
+                          className={`font-black font-mono text-xs ${
+                            tx.type === 'OWNER_GRANT'
+                              ? 'text-emerald-600'
+                              : 'text-rose-600'
+                          }`}
+                        >
+                          {tx.type === 'OWNER_GRANT' ? '+' : '-'}
+                          {tx.amountPoints} Mata
+                        </p>
+                        <p className="text-[10px] text-slate-500 font-mono">
+                          (RM {tx.amountRM.toFixed(2)})
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
         )}
 
       </div>
@@ -828,6 +1106,14 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
 
         <button
           onClick={() => {
+            if (!isMyIdVerified) {
+              setIsMyIdModalOpen(true);
+              return;
+            }
+            if (!hasClaimed) {
+              setIsClaimModalOpen(true);
+              return;
+            }
             setPaymentError('');
             setCameraScanSuccessMsg('');
             setSelectedSellerId('');
@@ -857,7 +1143,105 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
         </button>
       </div>
 
-      {/* PAYMENT & CAMERA SCANNER MODAL */}
+      {/* 5. FULLSCREEN BUYER QR MODAL (For seller to scan buyer phone) */}
+      {isBuyerQrModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[36px] w-full max-w-sm overflow-hidden shadow-2xl border-4 border-white text-center p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <img
+                  src="/logo-jam.png"
+                  alt="JAM"
+                  className="h-8 w-auto object-contain"
+                />
+                <span className="font-bold text-xs text-slate-800">Kad Loyaliti Ahli</span>
+              </div>
+              <button
+                onClick={() => setIsBuyerQrModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Event Location Badge */}
+            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 font-bold flex items-center justify-center gap-1.5">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <span>{activeEvent?.name || 'Jualan Agro MADANI'}</span>
+            </div>
+
+            {/* QR Code Big Container */}
+            <div className="relative inline-block p-4 bg-white rounded-3xl border-4 border-blue-600/30 shadow-xl">
+              <QRCodeSVG
+                value={buyerQrPayload}
+                size={200}
+                level="H"
+                fgColor={isEventEnded ? '#991b1b' : '#002f6c'}
+              />
+              {isEventEnded && (
+                <div className="absolute inset-0 bg-rose-950/85 backdrop-blur-xs rounded-2xl flex flex-col items-center justify-center text-white p-3">
+                  <Lock className="w-8 h-8 text-rose-300 mb-1" />
+                  <span className="font-black text-xs uppercase tracking-wider">
+                    Kod QR Tidak Sah
+                  </span>
+                  <span className="text-[10px] text-rose-200 mt-1">
+                    Acara di lokasi ini telah selesai.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="font-extrabold text-sm text-slate-900">{currentMember.name}</p>
+              <p className="text-xs font-mono text-slate-500">
+                No. Kad: <strong className="text-blue-700">{currentMember.cardId}</strong> • MyKad: {currentMember.icNumber || '850412-10-5432'}
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Baki Sah:</span>
+              <span className="font-black font-mono text-emerald-600 text-sm">
+                {isEventEnded ? '0 Mata (Luput)' : `${currentMember.points.toLocaleString()} Mata (RM ${(currentMember.points / 100).toFixed(2)})`}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              Tunjukkan kod QR ini kepada mana-mana peniaga gerai JAM di lokasi ini untuk tolak mata belian.
+            </p>
+
+            <button
+              onClick={() => setIsBuyerQrModalOpen(false)}
+              className="w-full btn-gradient-blue text-white py-3 rounded-full font-bold text-xs uppercase cursor-pointer"
+            >
+              Tutup Paparan QR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MYDIGITAL ID AUTH MODAL */}
+      <MyDigitalIdAuthModal
+        isOpen={isMyIdModalOpen}
+        onClose={() => setIsMyIdModalOpen(false)}
+        onAuthenticate={(userData) => {
+          if (onAuthenticateMyDigitalId) {
+            onAuthenticateMyDigitalId(userData);
+          }
+        }}
+      />
+
+      {/* 7. CLAIM EVENT POINTS MODAL */}
+      {onClaimEventPoints && (
+        <ClaimPointsModal
+          isOpen={isClaimModalOpen}
+          onClose={() => setIsClaimModalOpen(false)}
+          currentMember={currentMember}
+          events={events}
+          onClaimEventPoints={onClaimEventPoints}
+        />
+      )}
+
+      {/* 8. PAYMENT & CAMERA SCANNER MODAL */}
       {isScannerOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-end sm:items-center justify-center p-3">
           <div className="bg-white rounded-t-[36px] sm:rounded-[36px] w-full max-w-sm overflow-hidden shadow-2xl border border-white animate-in slide-in-from-bottom duration-200">
@@ -1050,7 +1434,7 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
         </div>
       )}
 
-      {/* RECEIPT MODAL */}
+      {/* 9. RECEIPT MODAL */}
       {lastReceipt && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-[36px] w-full max-w-sm overflow-hidden shadow-2xl border border-white p-6 text-center space-y-4">

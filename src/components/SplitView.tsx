@@ -1,5 +1,5 @@
 import React from 'react';
-import { Member, Seller, Transaction, ReimbursementClaim } from '../types';
+import { Member, Seller, Transaction, ReimbursementClaim, EventLocation } from '../types';
 import { BuyerPortal } from './BuyerPortal';
 import { SellerPortal } from './SellerPortal';
 import { Smartphone, Store, ArrowRightLeft, Sparkles } from 'lucide-react';
@@ -19,7 +19,31 @@ interface SplitViewProps {
   ) => { success: boolean; message?: string; transaction?: Transaction };
   transactions: Transaction[];
   claims: ReimbursementClaim[];
-  onSubmitClaim: (sellerId: string, amountRM: number) => void;
+  onSubmitClaim: (
+    sellerId: string,
+    amountRM: number,
+    claimData?: {
+      receiptUrl?: string;
+      receiptName?: string;
+      notes?: string;
+      bankName?: string;
+      bankAccountNumber?: string;
+      accountHolderName?: string;
+    }
+  ) => void;
+  events?: EventLocation[];
+  onClaimEventPoints?: (
+    eventId: string,
+    event: EventLocation
+  ) => { success: boolean; message: string };
+  onAuthenticateMyDigitalId?: (userData: {
+    nama: string;
+    nric: string;
+    phone: string;
+    memberId?: string;
+  }) => void;
+  onLogoutMyDigitalId?: () => void;
+  onToggleEventStatus?: (eventId: string) => void;
 }
 
 export const SplitView: React.FC<SplitViewProps> = (props) => {
@@ -71,6 +95,11 @@ export const SplitView: React.FC<SplitViewProps> = (props) => {
             sellers={props.allSellers}
             onMakePayment={props.onMakePayment}
             transactions={props.transactions}
+            events={props.events}
+            onClaimEventPoints={props.onClaimEventPoints}
+            onAuthenticateMyDigitalId={props.onAuthenticateMyDigitalId}
+            onLogoutMyDigitalId={props.onLogoutMyDigitalId}
+            onToggleEventStatus={props.onToggleEventStatus}
           />
         </div>
 

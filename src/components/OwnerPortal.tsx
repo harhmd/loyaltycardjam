@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Member, Seller, Transaction, ReimbursementClaim } from '../types';
+import { Member, Seller, Transaction, ReimbursementClaim, EventLocation } from '../types';
 import confetti from 'canvas-confetti';
+import { analyzeClaimAudit } from '../utils/auditUtils';
 import {
   LayoutGrid,
   ShoppingBag,
@@ -32,7 +33,14 @@ import {
   PanelLeftClose,
   ChevronRight,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Receipt,
+  FileText,
+  Eye,
+  ShieldAlert,
+  AlertOctagon,
+  X,
+  CreditCard
 } from 'lucide-react';
 
 interface OwnerPortalProps {
@@ -47,10 +55,13 @@ interface OwnerPortalProps {
     expiryDate?: string
   ) => void;
   onApproveClaim: (claimId: string) => void;
+  onRejectClaim?: (claimId: string, reason: string) => void;
   onExpireUnusedPoints: (memberId?: string) => number;
   onUpdateExpiryDate: (memberId: string | 'ALL', newDate: string) => void;
   onSwitchView?: (view: 'SPLIT' | 'BUYER' | 'SELLER' | 'OWNER') => void;
   onResetData?: () => void;
+  events?: EventLocation[];
+  onToggleEventStatus?: (eventId: string) => void;
 }
 
 export const OwnerPortal: React.FC<OwnerPortalProps> = ({
@@ -60,10 +71,13 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   claims,
   onGrantPoints,
   onApproveClaim,
+  onRejectClaim,
   onExpireUnusedPoints,
   onUpdateExpiryDate,
   onSwitchView,
   onResetData,
+  events = [],
+  onToggleEventStatus,
 }) => {
   // Active Navigation in Visualboard Left Sidebar
   const [activeNav, setActiveNav] = useState<
@@ -74,6 +88,13 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
   const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
   const [isClaimsModalOpen, setIsClaimsModalOpen] = useState(false);
+  
+  // Selected claim for receipt & anti-fraud audit inspection modal
+  const [selectedClaimForAudit, setSelectedClaimForAudit] = useState<ReimbursementClaim | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState<string>('');
+  const [isRejectBoxOpen, setIsRejectBoxOpen] = useState<boolean>(false);
+  const [claimFilter, setClaimFilter] = useState<'ALL' | 'PENDING' | 'PAID' | 'REJECTED'>('ALL');
+  const [claimAuditSuccessMsg, setClaimAuditSuccessMsg] = useState<string>('');
 
   const [grantTarget, setGrantTarget] = useState<'ALL' | string>('ALL');
   const [amountRM, setAmountRM] = useState<string>('10.00');
@@ -887,43 +908,74 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                   </div>
                 </div>
 
-                {/* Event list items matching reference layout */}
+                {/* Event list items from events state */}
                 <div className="space-y-3 pt-1">
-                  <div className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-200 overflow-hidden">
-                      <img
-                        src="/ayam_segar.png"
-                        alt="Event"
-                        className="w-full h-full object-cover group-hover:scale-105 transition"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h5 className="text-xs font-black text-slate-900 truncate">
-                        Pasar Tani Mega Putrajaya
-                      </h5>
-                      <p className="text-[10px] text-slate-400">
-                        08 November 2026 | 18:00 (Ahad)
-                      </p>
-                    </div>
-                  </div>
+                  {events.length > 0 ? (
+                    events.map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="p-2.5 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 flex items-center justify-between gap-2.5 transition"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs ${
+                              evt.status === 'ACTIVE'
+                                ? 'bg-emerald-600'
+                                : evt.status === 'ENDED'
+                                ? 'bg-rose-600'
+                                : 'bg-blue-600'
+                            }`}
+                          >
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-black text-slate-900 truncate">
+                              {evt.name}
+                            </h5>
+                            <p className="text-[10px] text-slate-500 font-mono truncate">
+                              {evt.dateStr} • {evt.startTime} - {evt.endTime}
+                            </p>
+                          </div>
+                        </div>
 
-                  <div className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-200 overflow-hidden">
-                      <img
-                        src="/buah_tempatan.png"
-                        alt="Event"
-                        className="w-full h-full object-cover group-hover:scale-105 transition"
-                      />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                              evt.status === 'ACTIVE'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : evt.status === 'ENDED'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-blue-100 text-blue-800 border border-blue-300'
+                            }`}
+                          >
+                            {evt.status === 'ACTIVE'
+                              ? 'Aktif'
+                              : evt.status === 'ENDED'
+                              ? 'Tamat'
+                              : 'Akan Datang'}
+                          </span>
+
+                          {onToggleEventStatus && (
+                            <button
+                              type="button"
+                              onClick={() => onToggleEventStatus(evt.id)}
+                              className={`text-[9px] font-extrabold px-2 py-1 rounded-lg transition cursor-pointer ${
+                                evt.status === 'ACTIVE'
+                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                              }`}
+                            >
+                              {evt.status === 'ACTIVE' ? 'Tamatkan' : 'Aktifkan'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-xs text-slate-400 py-2">
+                      Tiada lokasi acara direkodkan.
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h5 className="text-xs font-black text-slate-900 truncate">
-                        Jualan Agro MADANI Selayang
-                      </h5>
-                      <p className="text-[10px] text-slate-400">
-                        15 November 2026 | 18:00 (Ahad)
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* View Event Calendar Button */}
@@ -1184,88 +1236,220 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
         </div>
       )}
 
-      {/* 3. MODAL: TUNTUTAN GERAI (CLAIMS) */}
+      {/* ======================================================== */}
+      {/* 3. MODAL: PENGURUSAN TUNTUTAN GERAI (CLAIMS AUDIT TABLE)  */}
+      {/* ======================================================== */}
       {isClaimsModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-2xl p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div className="bg-white rounded-[32px] w-full max-w-4xl p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[88vh] overflow-y-auto">
+            
+            {/* Modal Header with Count & Stats */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                  <Store className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">
+                  <Receipt className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    Tuntutan Bayaran Balik Peniaga Gerai
+                  <h3 className="text-base font-black text-slate-900">
+                    Pengesahan & Audit Tuntutan Subsidi Peniaga
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Semak permohonan bayaran balik tunai bagi mata yang ditebus oleh ahli di gerai.
+                    Semak padanan lejar digital, lampiran resit, dan pengesanan pertindihan MyKad/Telefon.
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setIsClaimsModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
-              >
-                ✕
-              </button>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  onClick={() => setIsClaimsModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center gap-1.5 text-xs font-bold bg-slate-100 p-1 rounded-2xl">
+                <button
+                  onClick={() => setClaimFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                    claimFilter === 'ALL' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  Semua ({claims.length})
+                </button>
+                <button
+                  onClick={() => setClaimFilter('PENDING')}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 ${
+                    claimFilter === 'PENDING' ? 'bg-white text-amber-900 shadow-2xs font-extrabold' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <span>Menunggu Kelulusan</span>
+                  <span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-mono text-[9px] flex items-center justify-center">
+                    {claims.filter((c) => c.status === 'PENDING').length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setClaimFilter('PAID')}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                    claimFilter === 'PAID' ? 'bg-white text-emerald-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  Diluluskan ({claims.filter((c) => c.status === 'PAID').length})
+                </button>
+                <button
+                  onClick={() => setClaimFilter('REJECTED')}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer ${
+                    claimFilter === 'REJECTED' ? 'bg-white text-rose-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  Ditolak ({claims.filter((c) => c.status === 'REJECTED').length})
+                </button>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-[10px] text-slate-400 block font-medium">Baki Tertunggak Kelulusan:</span>
+                <span className="text-sm font-black font-mono text-blue-900">
+                  RM {claims.filter(c => c.status === 'PENDING').reduce((acc, c) => acc + c.amountRM, 0).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {claimAuditSuccessMsg && (
+              <div className="bg-emerald-50 border border-emerald-300 p-3 rounded-2xl text-xs text-emerald-800 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{claimAuditSuccessMsg}</span>
+              </div>
+            )}
+
+            {/* Claims Table */}
             {claims.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">
                 Tiada permohonan tuntutan daripada peniaga setakat ini.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-2xl border border-slate-100">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                  <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100">
                     <tr>
                       <th className="py-2.5 px-3">No. Tuntutan</th>
                       <th className="py-2.5 px-3">Peniaga & Gerai</th>
                       <th className="py-2.5 px-3">Jumlah (RM)</th>
+                      <th className="py-2.5 px-3">Lampiran Resit</th>
+                      <th className="py-2.5 px-3">Status Integriti & Audit</th>
                       <th className="py-2.5 px-3">Status</th>
                       <th className="py-2.5 px-3 text-right">Tindakan</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {claims.map((clm) => (
-                      <tr key={clm.id} className="hover:bg-blue-50/30">
-                        <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
-                          {clm.id}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className="font-bold text-slate-900 block">{clm.sellerName}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">Gerai: {clm.stallNumber}</span>
-                        </td>
-                        <td className="py-2.5 px-3 font-mono font-black text-slate-900">
-                          RM {clm.amountRM.toFixed(2)}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              clm.status === 'PAID'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {clm.status === 'PAID' ? 'SELESAI DIBAYAR' : 'MENUNGGU KELULUSAN'}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-right">
-                          {clm.status !== 'PAID' ? (
-                            <button
-                              onClick={() => onApproveClaim(clm.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] px-3 py-1 rounded-lg transition cursor-pointer shadow-xs"
-                            >
-                              Luluskan
-                            </button>
-                          ) : (
-                            <span className="text-emerald-700 font-bold text-[10px] flex items-center justify-end gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Berbayar
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {claims
+                      .filter((clm) => {
+                        if (claimFilter === 'ALL') return true;
+                        return clm.status === claimFilter;
+                      })
+                      .map((clm) => {
+                        const audit = analyzeClaimAudit(clm, transactions, members);
+                        return (
+                          <tr key={clm.id} className="hover:bg-blue-50/30 transition">
+                            <td className="py-3 px-3 font-mono font-bold text-slate-800">
+                              {clm.id}
+                            </td>
+
+                            <td className="py-3 px-3">
+                              <span className="font-extrabold text-slate-900 block leading-tight">
+                                {clm.sellerName}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                Gerai: {clm.stallNumber}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-3 font-mono font-black text-slate-900 text-sm">
+                              RM {clm.amountRM.toFixed(2)}
+                            </td>
+
+                            {/* Lampiran Resit */}
+                            <td className="py-3 px-3">
+                              {clm.receiptUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedClaimForAudit(clm)}
+                                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 text-[11px] font-bold cursor-pointer transition shadow-2xs"
+                                >
+                                  <div className="w-5 h-5 rounded-md overflow-hidden bg-white border border-slate-200 shrink-0">
+                                    <img src={clm.receiptUrl} alt="Resit" className="w-full h-full object-cover" />
+                                  </div>
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>Lihat</span>
+                                </button>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full font-bold">
+                                  <AlertTriangle className="w-3 h-3" /> Tiada Resit
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Semakan Integriti & Audit */}
+                            <td className="py-3 px-3">
+                              <div className="space-y-1">
+                                {audit.isTally ? (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                                    <Check className="w-2.5 h-2.5" /> 100% Sepadan (Tally)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-black bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full">
+                                    <AlertOctagon className="w-2.5 h-2.5" /> Tidak Sepadan!
+                                  </span>
+                                )}
+
+                                {audit.hasDuplicatePhone && (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full block w-fit">
+                                    <AlertTriangle className="w-2.5 h-2.5" /> No. Telefon Berkongsi
+                                  </span>
+                                )}
+
+                                {audit.hasDuplicateIc && (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-black bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full block w-fit">
+                                    <ShieldAlert className="w-2.5 h-2.5" /> MyKad Berulang!
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3 px-3">
+                              <span
+                                className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                                  clm.status === 'PAID'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : clm.status === 'REJECTED'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {clm.status === 'PAID'
+                                  ? 'SELESAI DIBAYAR'
+                                  : clm.status === 'REJECTED'
+                                  ? 'DITOLAK'
+                                  : 'MENUNGGU KELULUSAN'}
+                              </span>
+                            </td>
+
+                            {/* Tindakan */}
+                            <td className="py-3 px-3 text-right">
+                              <button
+                                onClick={() => setSelectedClaimForAudit(clm)}
+                                className="btn-gradient-blue text-white font-extrabold text-[10px] px-3 py-1.5 rounded-xl transition cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Semak & Lulus</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -1273,6 +1457,357 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* 4. LIGHTBOX: MODAL SEMAKAN AUDIT INTEGRITI & RESIT       */}
+      {/* ======================================================== */}
+      {selectedClaimForAudit && (() => {
+        const audit = analyzeClaimAudit(selectedClaimForAudit, transactions, members);
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+            <div className="bg-white rounded-[36px] w-full max-w-4xl max-h-[92vh] overflow-y-auto p-6 space-y-5 shadow-2xl border border-slate-200">
+              
+              {/* Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-slate-900">
+                        Audit Integriti & Semakan Resit Tuntutan: {selectedClaimForAudit.id}
+                      </h3>
+                      <span
+                        className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                          selectedClaimForAudit.status === 'PAID'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : selectedClaimForAudit.status === 'REJECTED'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {selectedClaimForAudit.status === 'PAID'
+                          ? 'DILULUSKAN'
+                          : selectedClaimForAudit.status === 'REJECTED'
+                          ? 'DITOLAK'
+                          : 'MENUNGGU KELULUSAN'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Peniaga: <strong>{selectedClaimForAudit.sellerName}</strong> • Gerai No: <strong>{selectedClaimForAudit.stallNumber}</strong> • Tarikh: {selectedClaimForAudit.timestamp}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedClaimForAudit(null);
+                    setIsRejectBoxOpen(false);
+                    setRejectReasonInput('');
+                  }}
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* 2-Column Split: Left is Receipt Preview, Right is Audit Ledger Engine */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                {/* 1. LEFT COLUMN: ATTACHED RECEIPT PREVIEW (5 Cols) */}
+                <div className="lg:col-span-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Receipt className="w-4 h-4 text-blue-600" />
+                      <span>Dokumen Resit Lampiran Peniaga</span>
+                    </h4>
+                    {selectedClaimForAudit.receiptUrl && (
+                      <a
+                        href={selectedClaimForAudit.receiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>Imej Penuh</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  {selectedClaimForAudit.receiptUrl ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 overflow-hidden shadow-xs">
+                      <img
+                        src={selectedClaimForAudit.receiptUrl}
+                        alt="Resit Tuntutan"
+                        className="w-full h-auto max-h-[460px] object-contain rounded-xl bg-white border border-slate-200"
+                      />
+                      <div className="mt-2 px-1 text-[10px] text-slate-500 flex items-center justify-between font-mono">
+                        <span>{selectedClaimForAudit.receiptName || 'resit_tuntutan.png'}</span>
+                        <span className="text-emerald-700 font-bold">Terlampir ✅</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border-2 border-dashed border-rose-300 bg-rose-50/50 p-8 text-center space-y-2">
+                      <AlertOctagon className="w-8 h-8 text-rose-500 mx-auto" />
+                      <p className="text-xs font-black text-rose-900">
+                        Tiada Lampiran Resit Dijumpai!
+                      </p>
+                      <p className="text-[10px] text-rose-700">
+                        Peniaga tidak melampirkan bukti resit jualan atau penyata rasmi. Tuntutan ini berisiko tinggi.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Bank Details Box */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1 text-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Akaun Bank Pembayaran Tunai:
+                    </span>
+                    <p className="font-extrabold text-slate-900">
+                      {selectedClaimForAudit.bankName || 'Maybank'} • <span className="font-mono">{selectedClaimForAudit.bankAccountNumber || '5142 8829 1042'}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Penerima: {selectedClaimForAudit.accountHolderName || selectedClaimForAudit.sellerName}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. RIGHT COLUMN: DIGITAL RECONCILIATION & ANTI-FRAUD ENGINE (7 Cols) */}
+                <div className="lg:col-span-7 space-y-4">
+                  
+                  {/* TALLY & RISK SCORECARD */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-200/80">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                        Jumlah Tuntutan Peniaga:
+                      </span>
+                      <p className="text-2xl font-black font-mono text-blue-900 mt-0.5">
+                        RM {selectedClaimForAudit.amountRM.toFixed(2)}
+                      </p>
+                      <span className="text-[10px] text-slate-400">
+                        Lejar Sebenar: RM {audit.calculatedSumRM.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className={`p-3.5 rounded-2xl border ${
+                      audit.riskScore === 'LOW'
+                        ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                        : audit.riskScore === 'MEDIUM'
+                        ? 'bg-amber-50/80 border-amber-200 text-amber-950'
+                        : 'bg-rose-50/80 border-rose-200 text-rose-950'
+                    }`}>
+                      <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
+                        Penarafan Risiko Audit:
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {audit.riskScore === 'LOW' ? (
+                          <span className="text-lg font-black text-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600" /> RENDAH (SAH)
+                          </span>
+                        ) : audit.riskScore === 'MEDIUM' ? (
+                          <span className="text-lg font-black text-amber-800 flex items-center gap-1">
+                            <AlertTriangle className="w-5 h-5 text-amber-600" /> PERLU SEMAKAN
+                          </span>
+                        ) : (
+                          <span className="text-lg font-black text-rose-800 flex items-center gap-1">
+                            <ShieldAlert className="w-5 h-5 text-rose-600" /> TINGGI (BERISIKO)
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] opacity-80 block mt-0.5">
+                        {audit.isTally ? 'Padanan Lejar Tally 100% ✅' : 'Ralat Padanan Lejar ❌'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* FRAUD DETECTION AUDIT BAR */}
+                  <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs">
+                    <h5 className="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-blue-600" />
+                      <span>Semakan Anti-Ketirisan & Identiti Pengguna</span>
+                    </h5>
+
+                    <div className="space-y-1.5 pt-1">
+                      {/* Check 1: MyKad Uniqueness */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80">
+                        <span className="font-bold text-slate-700">Semakan Pertindihan MyKad (IC):</span>
+                        {!audit.hasDuplicateIc ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> Semua MyKad Unik ({audit.uniqueBuyersCount}/{audit.totalTransactionsCount} Ahli)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <AlertOctagon className="w-3 h-3 text-rose-600" /> Pertindihan MyKad Dikesan!
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Check 2: Phone Number Uniqueness */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80">
+                        <span className="font-bold text-slate-700">Semakan Nombor Telefon Ahli:</span>
+                        {!audit.hasDuplicatePhone ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> Tiada Pertindihan Telefon
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-amber-600" /> No. Telefon Sama (Keluarga / Proksi)
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Check 3: Digital Ledger Tally Check */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80">
+                        <span className="font-bold text-slate-700">Padanan Nilai Lejar Digital:</span>
+                        {audit.isTally ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 text-emerald-600" /> 100% Sepadan (Tally RM {selectedClaimForAudit.amountRM.toFixed(2)})
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <AlertOctagon className="w-3 h-3 text-rose-600" /> Tidak Sepadan (Beza: RM {(selectedClaimForAudit.amountRM - audit.calculatedSumRM).toFixed(2)})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ITEMISED TRANSACTIONS THAT FORM THIS CLAIM */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h5 className="font-extrabold text-slate-900 text-xs">
+                        Senarai Belian Pengguna Berkaitan ({audit.transactions.length} transaksi)
+                      </h5>
+                      <span className="text-[10px] text-slate-400">
+                        Penebusan QR sah di gerai
+                      </span>
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto rounded-2xl border border-slate-200 divide-y divide-slate-100 bg-white">
+                      {audit.transactions.map((tx) => (
+                        <div key={tx.id} className="p-2.5 flex items-center justify-between text-xs hover:bg-slate-50 transition">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[10px] text-slate-400 font-bold">{tx.id}</span>
+                              <span className="font-extrabold text-slate-900">{tx.memberName}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              MyKad: <span className="font-mono text-slate-600">{tx.memberIc || '850412-10-****'}</span> • Tel: <span className="font-mono text-slate-600">{tx.memberPhone || '012-384****'}</span>
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                              {tx.timestamp} • {tx.note}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-black font-mono text-slate-900 block text-xs">
+                              RM {tx.amountRM.toFixed(2)}
+                            </span>
+                            <span className="text-[9px] text-emerald-600 font-bold font-mono">
+                              ({tx.amountPoints} Mata)
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* REJECTION REASON BOX (WHEN REJECT IS TOGGLED) */}
+                  {isRejectBoxOpen && (
+                    <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl space-y-2">
+                      <label className="block text-[11px] font-bold text-rose-900">
+                        Sebab Penolakan Tuntutan:
+                      </label>
+                      <input
+                        type="text"
+                        value={rejectReasonInput}
+                        onChange={(e) => setRejectReasonInput(e.target.value)}
+                        placeholder="Contoh: Resit jualan kabur / Jumlah tidak tally dengan belian"
+                        className="w-full bg-white border border-rose-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                      />
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          onClick={() => setIsRejectBoxOpen(false)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onRejectClaim) {
+                              onRejectClaim(selectedClaimForAudit.id, rejectReasonInput);
+                            }
+                            setSelectedClaimForAudit(null);
+                            setIsRejectBoxOpen(false);
+                            setRejectReasonInput('');
+                            setClaimAuditSuccessMsg(`Tuntutan ${selectedClaimForAudit.id} telah ditolak dengan catatan audit.`);
+                            setTimeout(() => setClaimAuditSuccessMsg(''), 5000);
+                          }}
+                          className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs cursor-pointer shadow-xs"
+                        >
+                          Sahkan Penolakan
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ACTION BAR: APPROVE OR REJECT */}
+                  <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    {selectedClaimForAudit.status === 'PAID' ? (
+                      <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-2xl w-full flex items-center gap-2 text-xs font-bold">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                        <div>
+                          <p>Tuntutan ini telah disahkan & diluluskan bayaran pada {selectedClaimForAudit.approvedAt || 'hari ini'}.</p>
+                          <p className="text-[10px] text-emerald-700 font-normal">Pegawai Pelulus: {selectedClaimForAudit.approvedBy || 'Urusetia Pusat JAM'}</p>
+                        </div>
+                      </div>
+                    ) : selectedClaimForAudit.status === 'REJECTED' ? (
+                      <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-2xl w-full flex items-center gap-2 text-xs font-bold">
+                        <AlertOctagon className="w-5 h-5 text-rose-600 shrink-0" />
+                        <div>
+                          <p>Tuntutan ini telah ditolak oleh penganjur.</p>
+                          <p className="text-[10px] text-rose-700 font-normal">Sebab: {selectedClaimForAudit.rejectionReason || 'Maklumat tidak sah'}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsRejectBoxOpen(true)}
+                            className="px-4 py-2.5 rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs transition cursor-pointer"
+                          >
+                            Tolak Tuntutan
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onApproveClaim(selectedClaimForAudit.id);
+                              confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                              setSelectedClaimForAudit(null);
+                              setClaimAuditSuccessMsg(`Tuntutan ${selectedClaimForAudit.id} berjaya diluluskan untuk bayaran balik tunai sebanyak RM ${selectedClaimForAudit.amountRM.toFixed(2)}!`);
+                              setTimeout(() => setClaimAuditSuccessMsg(''), 5000);
+                            }}
+                            className="px-6 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition cursor-pointer shadow-md flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Luluskan & Sahkan Pembayaran</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

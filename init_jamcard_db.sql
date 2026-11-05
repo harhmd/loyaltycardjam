@@ -77,6 +77,23 @@ CREATE TABLE IF NOT EXISTS "Jamcard_products" (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "Jamcard_events" (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    venue VARCHAR(255) NOT NULL,
+    state VARCHAR(100) NOT NULL,
+    date_str VARCHAR(100) NOT NULL,
+    start_time VARCHAR(20) NOT NULL,
+    end_time VARCHAR(20) NOT NULL,
+    status VARCHAR(50) DEFAULT 'ACTIVE',
+    subsidy_amount_rm NUMERIC(10,2) DEFAULT 10.00,
+    subsidy_points BIGINT DEFAULT 1000,
+    total_quota INT DEFAULT 1000,
+    claimed_count INT DEFAULT 0,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS "Jamcard_campaigns" (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -121,6 +138,14 @@ VALUES
     ('PROD-003', 'Nenas MD2 Manis & Buah Tropika (1 Biji)', 'Buah Tempatan', 'STALL-003', 'Gerai Buah Tempatan Som', 8.00, 5.00, 'biji', 60, '/buah_tempatan.png'),
     ('PROD-004', 'Sayur Sawi, Kangkung & Bayam Segar', 'Sayur Kampung', 'STALL-004', 'Gerai Sayur Kampung Mak Jah', 5.00, 3.00, 'ikat', 100, '/sayur_kampung.png')
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "Jamcard_events" (id, name, venue, state, date_str, start_time, end_time, status, subsidy_amount_rm, subsidy_points, total_quota, claimed_count, description)
+VALUES
+    ('EVT-PUTRAJAYA', 'Jualan Agro MADANI Putrajaya Presint 2', 'Tapak Pasar Tani Mega, Presint 2, Putrajaya', 'W.P. Putrajaya', '06 Nov 2026 (Hari Ini)', '08:00', '18:00', 'ACTIVE', 10.00, 1000, 1000, 432, 'Program Jualan Agro MADANI Kebangsaan di Presint 2.'),
+    ('EVT-SERDANG', 'Jualan Agro MADANI MAEPS Serdang', 'Laman Florikultur, Dewan D MAEPS, Serdang', 'Selangor', '06 Nov 2026 (Hari Ini)', '09:00', '20:00', 'ACTIVE', 10.00, 1000, 1500, 812, 'Jualan Agro MADANI berskala besar di MAEPS Serdang.'),
+    ('EVT-SELAYANG', 'Jualan Agro MADANI Pasar Borong Selayang', 'Kompleks Pasar Borong Selayang, Batu Caves', 'Selangor', '06 Nov 2026 (Pagi Tadi)', '07:00', '13:00', 'ENDED', 10.00, 1000, 500, 500, 'Acara telah tamat pada jam 13:00. Mata telah dilupuskan.'),
+    ('EVT-MELAWATI', 'Jualan Agro MADANI Stadium Melawati Shah Alam', 'Perkarangan Stadium Melawati, Seksyen 13', 'Selangor', '07 Nov 2026 (Esok)', '08:00', '17:00', 'UPCOMING', 10.00, 1000, 800, 0, 'Pendaftaran awal tuntutan mata subsidi JAM.')
+ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, claimed_count = EXCLUDED.claimed_count;
 
 INSERT INTO "Jamcard_campaigns" (id, name, total_budget_rm, allocated_rm, rate_per_sen, default_expiry_days, status)
 VALUES

@@ -4,12 +4,14 @@ import {
   Seller,
   Transaction,
   ReimbursementClaim,
+  EventLocation,
 } from './types';
 import {
   INITIAL_MEMBERS,
   INITIAL_SELLERS,
   INITIAL_TRANSACTIONS,
   INITIAL_CLAIMS,
+  INITIAL_EVENT_LOCATIONS,
   playCashierChime,
 } from './store';
 import { BuyerPortal } from './components/BuyerPortal';
@@ -57,6 +59,11 @@ export const App: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_CLAIMS;
   });
 
+  const [events, setEvents] = useState<EventLocation[]>(() => {
+    const saved = localStorage.getItem('jam_events');
+    return saved ? JSON.parse(saved) : INITIAL_EVENT_LOCATIONS;
+  });
+
   const [activeView, setActiveView] = useState<'SPLIT' | 'BUYER' | 'SELLER' | 'OWNER'>('SPLIT');
   const [currentMemberId, setCurrentMemberId] = useState<string>('MEM-001');
   const [currentSellerId, setCurrentSellerId] = useState<string>('STALL-001');
@@ -82,6 +89,10 @@ export const App: React.FC = () => {
     localStorage.setItem('jam_claims', JSON.stringify(claims));
   }, [claims]);
 
+  useEffect(() => {
+    localStorage.setItem('jam_events', JSON.stringify(events));
+  }, [events]);
+
   const currentMember = members.find((m) => m.id === currentMemberId) || members[0];
   const currentSeller = sellers.find((s) => s.id === currentSellerId) || sellers[0];
 
@@ -97,6 +108,21 @@ export const App: React.FC = () => {
 
     if (!targetMember || !targetSeller) {
       return { success: false, message: 'Ahli atau Gerai tidak dijumpai.' };
+    }
+
+    if (!targetMember.isMyDigitalIdVerified) {
+      return {
+        success: false,
+        message: 'Pengesahan identiti MyDigital ID diperlukan sebelum membuat pembayaran mata.',
+      };
+    }
+
+    const activeEvt = events.find((e) => e.id === targetMember.activeEventId);
+    if (activeEvt && activeEvt.status === 'ENDED') {
+      return {
+        success: false,
+        message: `Acara di lokasi "${activeEvt.name}" telah tamat. Mata subsidi telah dilupuskan secara automatik dan tidak sah digunakan lagi.`,
+      };
     }
 
     const pointsToDeduct = Math.round(amountRM * 100);
@@ -121,6 +147,8 @@ export const App: React.FC = () => {
       type: 'PAYMENT',
       memberId: targetMember.id,
       memberName: targetMember.name,
+      memberIc: targetMember.icNumber || '850412-10-5432',
+      memberPhone: targetMember.phone,
       sellerId: targetSeller.id,
       sellerName: targetSeller.businessName,
       stallNumber: targetSeller.stallNumber,
@@ -266,10 +294,71 @@ export const App: React.FC = () => {
     );
   };
 
-  // Seller submits reimbursement claim
-  const handleSubmitClaim = (sellerId: string, amountRM: number) => {
+  // Seller submits reimbursement claim with receipt and audit reconciliation
+  const handleSubmitClaim = (
+    sellerId: string,
+    amountRM: number,
+    claimData?: {
+      receiptUrl?: string;
+      receiptName?: string;
+      notes?: string;
+      bankName?: string;
+      bankAccountNumber?: string;
+      accountHolderName?: string;
+    }
+  ) => {
     const targetSeller = sellers.find((s) => s.id === sellerId);
     if (!targetSeller) return;
+
+    // 1. Gather all unclaimed transactions for this seller in the digital ledger
+    const eligibleTransactions = transactions.filter(
+      (t) => t.sellerId === sellerId && t.type === 'PAYMENT' && !t.claimId
+    );
+
+    const ledgerSumRM = eligibleTransactions.reduce((acc, t) => acc + t.amountRM, 0);
+
+    // 2. Validate Tally Check: cannot claim more than actual transactions
+    const finalAmountRM = ledgerSumRM > 0 ? ledgerSumRM : amountRM;
+    const isTally = Math.abs(finalAmountRM - (ledgerSumRM > 0 ? ledgerSumRM : amountRM)) < 0.01;
+
+    // 3. Fraud Detection Engine: Check duplicate ICs and duplicate Phone numbers
+    const ics = eligibleTransactions.map((t) => t.memberIc || '').filter(Boolean);
+    const phones = eligibleTransactions.map((t) => t.memberPhone || '').filter(Boolean);
+
+    const icCounts: Record<string, number> = {};
+    ics.forEach((ic) => {
+      icCounts[ic] = (icCounts[ic] || 0) + 1;
+    });
+    const duplicateIcCount = Object.values(icCounts).filter((cnt) => cnt > 1).length;
+
+    const phoneCounts: Record<string, number> = {};
+    phones.forEach((ph) => {
+      phoneCounts[ph] = (phoneCounts[ph] || 0) + 1;
+    });
+    const duplicatePhoneCount = Object.values(phoneCounts).filter((cnt) => cnt > 1).length;
+
+    const auditFlags: string[] = [];
+    if (isTally) auditFlags.push('MATCHED_LEDGER_TALLY');
+    else auditFlags.push('UNMATCHED_LEDGER_DISCREPANCY');
+
+    if (claimData?.receiptUrl) auditFlags.push('RECEIPT_ATTACHED');
+    else auditFlags.push('NO_RECEIPT_ATTACHED');
+
+    if (duplicateIcCount > 0) auditFlags.push(`TRIGGER_DUPLICATE_IC_DETECTED (${duplicateIcCount})`);
+    else auditFlags.push('ALL_ICS_UNIQUE');
+
+    if (duplicatePhoneCount > 0) auditFlags.push(`TRIGGER_SHARED_PHONE_DETECTED (${duplicatePhoneCount})`);
+    else auditFlags.push('ALL_PHONES_UNIQUE');
+
+    let riskScore: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+    if (duplicateIcCount > 0 || !isTally || !claimData?.receiptUrl) {
+      riskScore = 'HIGH';
+    } else if (duplicatePhoneCount > 0) {
+      riskScore = 'MEDIUM';
+    }
+
+    const claimId = `CLM-${Math.floor(100 + Math.random() * 900)}`;
+    const linkedTxIds = eligibleTransactions.map((t) => t.id);
 
     const now = new Date();
     const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
@@ -279,29 +368,77 @@ export const App: React.FC = () => {
     ).padStart(2, '0')}`;
 
     const newClaim: ReimbursementClaim = {
-      id: `CLM-${Math.floor(100 + Math.random() * 900)}`,
+      id: claimId,
       sellerId: targetSeller.id,
       sellerName: targetSeller.businessName,
       stallNumber: targetSeller.stallNumber,
-      amountRM: amountRM,
+      amountRM: finalAmountRM,
       timestamp: formattedDate,
       status: 'PENDING',
+      receiptUrl: claimData?.receiptUrl,
+      receiptName: claimData?.receiptName,
+      notes: claimData?.notes,
+      bankName: claimData?.bankName || targetSeller.bankName,
+      bankAccountNumber: claimData?.bankAccountNumber || targetSeller.bankAccountNumber,
+      accountHolderName: claimData?.accountHolderName || targetSeller.ownerName,
+      linkedTransactionIds: linkedTxIds,
+      riskScore,
+      isTally,
+      duplicateIcCount,
+      duplicatePhoneCount,
+      auditFlags,
     };
+
+    // Link transactions to this claim in the digital ledger
+    setTransactions((prev) =>
+      prev.map((t) =>
+        linkedTxIds.includes(t.id) ? { ...t, claimId } : t
+      )
+    );
 
     setClaims((prev) => [newClaim, ...prev]);
 
     // Reset unclaimed in seller
     setSellers((prev) =>
-      prev.map((s) =>
-        s.id === sellerId ? { ...s, unclaimedSen: 0 } : s
-      )
+      prev.map((s) => (s.id === sellerId ? { ...s, unclaimedSen: 0 } : s))
     );
   };
 
   // Owner approves claim
   const handleApproveClaim = (claimId: string) => {
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(
+      now.getMinutes()
+    ).padStart(2, '0')}`;
+
     setClaims((prev) =>
-      prev.map((c) => (c.id === claimId ? { ...c, status: 'PAID' } : c))
+      prev.map((c) =>
+        c.id === claimId
+          ? {
+              ...c,
+              status: 'PAID',
+              approvedAt: formattedDate,
+              approvedBy: 'Urusetia Pusat JAM',
+            }
+          : c
+      )
+    );
+  };
+
+  // Owner rejects claim with reason
+  const handleRejectClaim = (claimId: string, reason: string) => {
+    setClaims((prev) =>
+      prev.map((c) =>
+        c.id === claimId
+          ? {
+              ...c,
+              status: 'REJECTED',
+              rejectionReason: reason || 'Tuntutan tidak melepasi semakan integriti lejar / resit tidak jelas',
+            }
+          : c
+      )
     );
   };
 
@@ -312,7 +449,242 @@ export const App: React.FC = () => {
       setSellers(INITIAL_SELLERS);
       setTransactions(INITIAL_TRANSACTIONS);
       setClaims(INITIAL_CLAIMS);
+      setEvents(INITIAL_EVENT_LOCATIONS);
       localStorage.clear();
+    }
+  };
+
+  // Normal user authenticates via MyDigital ID (OIDC SSO)
+  const handleAuthenticateMyDigitalId = (userData: {
+    nama: string;
+    nric: string;
+    phone: string;
+    memberId?: string;
+  }) => {
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(
+      now.getMinutes()
+    ).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    // Match existing member by memberId or NRIC
+    const existingMember = members.find(
+      (m) =>
+        (userData.memberId && m.id === userData.memberId) ||
+        (m.icNumber && m.icNumber === userData.nric)
+    );
+
+    if (existingMember) {
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === existingMember.id
+            ? {
+                ...m,
+                name: userData.nama,
+                icNumber: userData.nric,
+                phone: userData.phone || m.phone,
+                isMyDigitalIdVerified: true,
+                myDigitalIdAuthTime: formattedDate,
+              }
+            : m
+        )
+      );
+      setCurrentMemberId(existingMember.id);
+    } else {
+      // Create new citizen record authenticated via MyDigital ID
+      const newMemberId = `MEM-${String(members.length + 1).padStart(3, '0')}`;
+      const newCardId = `JAM-MY-${Math.floor(10000 + Math.random() * 90000)}`;
+      const newMember: Member = {
+        id: newMemberId,
+        name: userData.nama,
+        icNumber: userData.nric,
+        phone: userData.phone || '012-3456789',
+        cardId: newCardId,
+        points: 0, // Must click Claim Points!
+        joinedDate: formattedDate.split(' ')[0],
+        isMyDigitalIdVerified: true,
+        myDigitalIdAuthTime: formattedDate,
+        claimedEvents: [],
+        expiredPointsTotal: 0,
+      };
+
+      setMembers((prev) => [newMember, ...prev]);
+      setCurrentMemberId(newMember.id);
+    }
+  };
+
+  // Logout MyDigital ID session
+  const handleLogoutMyDigitalId = () => {
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === currentMemberId
+          ? { ...m, isMyDigitalIdVerified: false }
+          : m
+      )
+    );
+  };
+
+  // Normal user claims subsidy points for an approved event location
+  const handleClaimEventPoints = (eventId: string, event: EventLocation) => {
+    const targetMember = members.find((m) => m.id === currentMemberId);
+    if (!targetMember) {
+      return { success: false, message: 'Ahli tidak dijumpai.' };
+    }
+
+    if (!targetMember.isMyDigitalIdVerified) {
+      return {
+        success: false,
+        message: 'Pengesahan identiti MyDigital ID diperlukan sebelum menuntut mata.',
+      };
+    }
+
+    if (event.status === 'ENDED') {
+      return {
+        success: false,
+        message: 'Acara di lokasi ini telah selesai. Mata subsidi tidak lagi dibuka untuk tuntutan.',
+      };
+    }
+
+    // 1 Claim per IC per Event check (Anti-Fraud)
+    const alreadyClaimed = members.some(
+      (m) =>
+        (m.id === targetMember.id || (m.icNumber && m.icNumber === targetMember.icNumber)) &&
+        m.claimedEvents?.some((ce) => ce.eventId === eventId)
+    );
+
+    if (alreadyClaimed) {
+      return {
+        success: false,
+        message: `No. MyKad ${targetMember.icNumber || ''} telah menuntut mata subsidi bagi lokasi ${event.name}. Hanya 1 tuntutan dibenarkan setiap acara.`,
+      };
+    }
+
+    const now = new Date();
+    const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(
+      now.getMinutes()
+    ).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+    const expiryTimestamp = `${event.dateStr.includes('Hari Ini') ? '2026-11-06' : '2026-11-07'} ${event.endTime}`;
+
+    const newClaimedEvent = {
+      eventId: event.id,
+      eventName: event.name,
+      eventLocation: event.venue,
+      claimedAt: formattedDate,
+      pointsClaimed: event.subsidyPoints,
+      expiryDate: expiryTimestamp,
+      isExpired: false,
+    };
+
+    const newTxn: Transaction = {
+      id: `TXN-${Math.floor(1000 + Math.random() * 9000)}`,
+      timestamp: formattedDate,
+      type: 'OWNER_GRANT',
+      memberId: targetMember.id,
+      memberName: targetMember.name,
+      memberIc: targetMember.icNumber,
+      memberPhone: targetMember.phone,
+      amountSen: event.subsidyPoints,
+      amountPoints: event.subsidyPoints,
+      amountRM: event.subsidyAmountRM,
+      note: `Tuntutan Subsidi JAM: ${event.name} (MyDigital ID: ${targetMember.icNumber || 'Sah'})`,
+      status: 'SUCCESS',
+    };
+
+    // Update target member with new points and active event
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === targetMember.id
+          ? {
+              ...m,
+              points: m.points + event.subsidyPoints,
+              activeEventId: event.id,
+              activeEventName: event.name,
+              activeEventLocation: event.venue,
+              pointsExpiryDate: expiryTimestamp,
+              claimedEvents: [...(m.claimedEvents || []), newClaimedEvent],
+            }
+          : m
+      )
+    );
+
+    // Increment event claimed count
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === event.id ? { ...e, claimedCount: e.claimedCount + 1 } : e
+      )
+    );
+
+    // Add transaction record
+    setTransactions((prev) => [newTxn, ...prev]);
+
+    return {
+      success: true,
+      message: `Tahniah! Subsidi sebanyak ${event.subsidyPoints.toLocaleString()} Mata (RM ${event.subsidyAmountRM.toFixed(
+        2
+      )}) bagi lokasi ${event.name} berjaya dituntut ke dalam kad anda.`,
+    };
+  };
+
+  // Toggle event status (ACTIVE <-> ENDED) and trigger automatic points expiration
+  const handleToggleEventStatus = (eventId: string) => {
+    const targetEvent = events.find((e) => e.id === eventId);
+    if (!targetEvent) return;
+
+    const nextStatus = targetEvent.status === 'ACTIVE' ? 'ENDED' : 'ACTIVE';
+
+    setEvents((prev) =>
+      prev.map((e) => (e.id === eventId ? { ...e, status: nextStatus } : e))
+    );
+
+    // If transitioned to ENDED, auto-expire unspent points for all members bound to this event!
+    if (nextStatus === 'ENDED') {
+      const now = new Date();
+      const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+        now.getDate()
+      ).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(
+        now.getMinutes()
+      ).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+      const expiryTxns: Transaction[] = [];
+
+      setMembers((prev) =>
+        prev.map((m) => {
+          if (m.activeEventId === eventId && m.points > 0) {
+            expiryTxns.push({
+              id: `TXN-${Math.floor(1000 + Math.random() * 9000)}`,
+              timestamp: formattedDate,
+              type: 'EXPIRY',
+              memberId: m.id,
+              memberName: m.name,
+              memberIc: m.icNumber,
+              memberPhone: m.phone,
+              amountSen: m.points,
+              amountPoints: m.points,
+              amountRM: m.points / 100,
+              note: `Mata Luput: Acara ${targetEvent.name} telah selesai.`,
+              status: 'SUCCESS',
+            });
+
+            return {
+              ...m,
+              expiredPointsTotal: (m.expiredPointsTotal || 0) + m.points,
+              points: 0,
+              claimedEvents: (m.claimedEvents || []).map((ce) =>
+                ce.eventId === eventId ? { ...ce, isExpired: true } : ce
+              ),
+            };
+          }
+          return m;
+        })
+      );
+
+      if (expiryTxns.length > 0) {
+        setTransactions((prev) => [...expiryTxns, ...prev]);
+      }
     }
   };
 
@@ -697,6 +1069,11 @@ export const App: React.FC = () => {
               transactions={transactions}
               claims={claims}
               onSubmitClaim={handleSubmitClaim}
+              events={events}
+              onClaimEventPoints={handleClaimEventPoints}
+              onAuthenticateMyDigitalId={handleAuthenticateMyDigitalId}
+              onLogoutMyDigitalId={handleLogoutMyDigitalId}
+              onToggleEventStatus={handleToggleEventStatus}
             />
           )}
 
@@ -708,6 +1085,11 @@ export const App: React.FC = () => {
               sellers={sellers}
               onMakePayment={handleMakePayment}
               transactions={transactions}
+              events={events}
+              onClaimEventPoints={handleClaimEventPoints}
+              onAuthenticateMyDigitalId={handleAuthenticateMyDigitalId}
+              onLogoutMyDigitalId={handleLogoutMyDigitalId}
+              onToggleEventStatus={handleToggleEventStatus}
             />
           )}
 
@@ -730,10 +1112,13 @@ export const App: React.FC = () => {
               claims={claims}
               onGrantPoints={handleGrantPoints}
               onApproveClaim={handleApproveClaim}
+              onRejectClaim={handleRejectClaim}
               onExpireUnusedPoints={handleExpireUnusedPoints}
               onUpdateExpiryDate={handleUpdateExpiryDate}
               onSwitchView={setActiveView}
               onResetData={handleResetData}
+              events={events}
+              onToggleEventStatus={handleToggleEventStatus}
             />
           )}
         </main>
