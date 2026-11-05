@@ -14,6 +14,11 @@ import {
   Users,
   Timer
 } from 'lucide-react';
+import {
+  QuotaMeterIcon,
+  EventTentPinIcon,
+  AutoExpiryHourglassIcon,
+} from './AgroIcons';
 import confetti from 'canvas-confetti';
 import { playCashierChime } from '../store';
 
@@ -98,8 +103,8 @@ export const ClaimPointsModal: React.FC<ClaimPointsModalProps> = ({
 
           <div className="flex items-start justify-between relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center text-amber-300 shadow-md">
-                <Gift className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center p-1.5 shadow-md">
+                <QuotaMeterIcon className="w-8 h-8 drop-shadow" />
               </div>
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-black/30 px-2 py-0.5 rounded-full border border-amber-300/30">
@@ -198,8 +203,8 @@ export const ClaimPointsModal: React.FC<ClaimPointsModalProps> = ({
                           )}
                         </div>
 
-                        <p className="text-[11px] text-slate-600 mt-1 flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <p className="text-[11px] text-slate-600 mt-1 flex items-center gap-1.5">
+                          <EventTentPinIcon className="w-3.5 h-3.5 shrink-0" />
                           <span className="line-clamp-1">{evt.venue}</span>
                         </p>
 
@@ -268,7 +273,7 @@ export const ClaimPointsModal: React.FC<ClaimPointsModalProps> = ({
           {/* Event Rule Callout Note (Explicit First-Come, First-Served & Expiry) */}
           <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1.5">
             <div className="flex items-center gap-1.5 font-bold">
-              <Timer className="w-4 h-4 text-amber-700 shrink-0" />
+              <AutoExpiryHourglassIcon className="w-5 h-5 shrink-0" />
               <span>Prinsip Giliran Terawal (First-Come, First-Served):</span>
             </div>
             <p className="text-[11px] text-amber-800 leading-relaxed">

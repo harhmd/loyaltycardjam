@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Seller, Transaction, ReimbursementClaim } from '../types';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateJamReceiptImage } from '../utils/auditUtils';
+import { ItemProduceIcon, PasarStallIcon } from './AgroIcons';
 import {
   Store,
   QrCode,
@@ -256,6 +257,11 @@ export const SellerPortal: React.FC<SellerPortalProps> = ({
                 KOD: {currentSeller.id}
               </span>
             </div>
+          </div>
+
+          {/* Bespoke Produce Vector Category Emblem */}
+          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white/20 backdrop-blur-md p-2 flex items-center justify-center border border-white/30 shadow-inner">
+            <ItemProduceIcon category={currentSeller.category} className="w-12 h-12 drop-shadow-md" />
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">

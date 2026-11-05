@@ -3,6 +3,19 @@ import { Member, Seller, Transaction, ReimbursementClaim, EventLocation } from '
 import confetti from 'canvas-confetti';
 import { analyzeClaimAudit } from '../utils/auditUtils';
 import {
+  ChickenProduceIcon,
+  EggCrateIcon,
+  PineappleMelonIcon,
+  KampungVegIcon,
+  RicePaddyIcon,
+  FreshFishIcon,
+  PasarStallIcon,
+  ItemProduceIcon,
+  QuotaMeterIcon,
+  EventTentPinIcon,
+  AutoExpiryHourglassIcon,
+} from './AgroIcons';
+import {
   LayoutGrid,
   ShoppingBag,
   Sparkles,
@@ -181,13 +194,13 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
     setTimeout(() => setExpirySuccessMsg(''), 4000);
   };
 
-  // Products Table Data matching reference layout with JAM fresh produce
+  // Products Table Data matching reference layout with JAM fresh produce (Bespoke Icons)
   const PRODUCT_ROWS = [
     {
       id: '1',
       name: 'Ayam Segar Bismi',
       sub: 'Zon Unggas & Daging • Gerai Pak Ali',
-      image: '/ayam_segar.png',
+      iconType: 'CHICKEN',
       stocks: '12,245 ekor',
       price: 'RM 12.00',
       sales: '8,983',
@@ -198,7 +211,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
       id: '2',
       name: 'Telur Ayam Gred A',
       sub: 'Zon Telur & Runcit • Gerai Cikgu Samad',
-      image: '/telur_ayam.png',
+      iconType: 'EGGS',
       stocks: '8,463 papan',
       price: 'RM 14.00',
       sales: '1,293',
@@ -209,7 +222,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
       id: '3',
       name: 'Nenas MD2 & Buah Tempatan',
       sub: 'Zon Buah Tropika • Gerai Kak Som',
-      image: '/buah_tempatan.png',
+      iconType: 'FRUITS',
       stocks: '24,432 kg',
       price: 'RM 8.00',
       sales: '4,425',
@@ -220,12 +233,34 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
       id: '4',
       name: 'Sayur Kampung Segar',
       sub: 'Zon Hasil Tani Hijau • Gerai Mak Jah',
-      image: '/sayur_kampung.png',
+      iconType: 'VEG',
       stocks: '19,498 ikat',
       price: 'RM 5.00',
       sales: '6,392',
       earnings: 'RM 31,960.00',
       growth: '+8.32%',
+    },
+    {
+      id: '5',
+      name: 'Beras Putih MADANI (5kg)',
+      sub: 'Zon Keperluan Asas • Gerai Haji Ramli',
+      iconType: 'RICE',
+      stocks: '5,000 beg',
+      price: 'RM 13.00',
+      sales: '3,110',
+      earnings: 'RM 40,430.00',
+      growth: '+12.4%',
+    },
+    {
+      id: '6',
+      name: 'Ikan Kembung Segar Laut',
+      sub: 'Zon Ikan & Hasil Laut • Nelayan MADANI',
+      iconType: 'FISH',
+      stocks: '3,200 kg',
+      price: 'RM 9.00',
+      sales: '2,840',
+      earnings: 'RM 25,560.00',
+      growth: '+9.15%',
     },
   ];
 
@@ -572,21 +607,13 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                       />
                     </div>
 
-                    {/* Floating produce cards */}
-                    <div className="absolute top-0 right-2 w-12 h-12 rounded-2xl bg-white p-1 shadow-lg border border-white">
-                      <img
-                        src="/ayam_segar.png"
-                        alt="Ayam"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
+                    {/* Floating bespoke produce badges (NO AI IMAGES) */}
+                    <div className="absolute top-0 right-2 w-12 h-12 rounded-2xl bg-white/95 p-1.5 shadow-lg border border-white flex items-center justify-center">
+                      <ChickenProduceIcon className="w-9 h-9 drop-shadow-xs" />
                     </div>
 
-                    <div className="absolute bottom-1 left-2 w-11 h-11 rounded-2xl bg-white p-1 shadow-lg border border-white">
-                      <img
-                        src="/buah_tempatan.png"
-                        alt="Buah"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
+                    <div className="absolute bottom-1 left-2 w-12 h-12 rounded-2xl bg-white/95 p-1.5 shadow-lg border border-white flex items-center justify-center">
+                      <PineappleMelonIcon className="w-9 h-9 drop-shadow-xs" />
                     </div>
                   </div>
                 </div>
@@ -740,11 +767,10 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-3">
                               <input type="checkbox" className="rounded-sm accent-blue-600" />
-                              <div className="w-10 h-10 rounded-xl bg-slate-100 p-1 shrink-0 border border-slate-200/60 overflow-hidden">
-                                <img
-                                  src={row.image}
-                                  alt={row.name}
-                                  className="w-full h-full object-cover rounded-lg"
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-50 to-emerald-50/60 p-1 shrink-0 border border-slate-200/60 flex items-center justify-center">
+                                <ItemProduceIcon
+                                  type={row.iconType}
+                                  className="w-8 h-8 drop-shadow-2xs"
                                 />
                               </div>
                               <div>

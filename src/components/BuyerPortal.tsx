@@ -4,6 +4,18 @@ import { INITIAL_PRODUCTS, playCashierChime } from '../store';
 import { CameraQrScanner } from './CameraQrScanner';
 import { MyDigitalIdAuthModal } from './MyDigitalIdAuthModal';
 import { ClaimPointsModal } from './ClaimPointsModal';
+import {
+  ChickenProduceIcon,
+  EggCrateIcon,
+  PineappleMelonIcon,
+  KampungVegIcon,
+  RicePaddyIcon,
+  FreshFishIcon,
+  PasarStallIcon,
+  ItemProduceIcon,
+  EventTentPinIcon,
+  AutoExpiryHourglassIcon,
+} from './AgroIcons';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import {
@@ -396,17 +408,24 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
         <div
           className={`rounded-[36px] border-2 shadow-2xl relative overflow-hidden text-white transition-all duration-300 ${
             isEventEnded
-              ? 'border-rose-400/80 grayscale-[20%]'
-              : 'border-amber-300/70 hover:shadow-emerald-900/30'
+              ? 'border-rose-400/80 bg-gradient-to-br from-slate-950 via-rose-950/80 to-slate-900'
+              : 'border-amber-300/80 bg-gradient-to-br from-[#02182b] via-[#042845] to-[#044331] hover:shadow-emerald-900/30'
           }`}
-          style={{
-            backgroundImage: "url('/jam-card-luxury.jpg')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
         >
-          {/* Multi-layered Glassmorphic Scrim for High Contrast & Text Legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/75 to-slate-950/40 pointer-events-none"></div>
+          {/* Authentic Vector Geometric Batik & Agro Lattice Watermark (NO AI IMAGES) */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="cardAgroPattern" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <path d="M18 0L36 18L18 36L0 18Z" fill="none" stroke="#fbbf24" strokeWidth="0.8" opacity="0.4" />
+                  <circle cx="18" cy="18" r="3" fill="#34d399" opacity="0.35" />
+                  <circle cx="0" cy="0" r="1.5" fill="#60a5fa" opacity="0.4" />
+                  <circle cx="36" cy="36" r="1.5" fill="#60a5fa" opacity="0.4" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#cardAgroPattern)" />
+            </svg>
+          </div>
           <div className="absolute inset-0 card-gloss-shimmer pointer-events-none"></div>
 
           <div className="relative z-10 p-5 flex flex-col justify-between min-h-[250px]">
@@ -532,6 +551,34 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Bespoke Agro Produce Category Vector Badges (NO AI IMAGES) */}
+            <div className="flex items-center gap-1.5 flex-wrap my-1.5">
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <ChickenProduceIcon className="w-3.5 h-3.5" />
+                <span>Ayam Segar</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <EggCrateIcon className="w-3.5 h-3.5" />
+                <span>Telur Gred A</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <PineappleMelonIcon className="w-3.5 h-3.5" />
+                <span>Buah MD2</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <KampungVegIcon className="w-3.5 h-3.5" />
+                <span>Sayur Kampung</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <RicePaddyIcon className="w-3.5 h-3.5" />
+                <span>Beras MADANI</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-amber-300/30 text-[9px] font-bold text-amber-200">
+                <FreshFishIcon className="w-3.5 h-3.5" />
+                <span>Ikan Segar</span>
+              </div>
             </div>
 
             {/* Approved Event Location Tag on Card */}
@@ -896,15 +943,15 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                     onClick={() => handleSelectProduct(prod)}
                     className="bg-white rounded-[26px] p-3.5 border border-white shadow-sm hover:shadow-md hover:border-blue-200 transition cursor-pointer relative flex items-center gap-3.5 group"
                   >
-                    {/* 3D Product Image / Visual Frame */}
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-50 to-blue-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner p-1">
-                      <img
-                        src={prod.imageUrl || '/card-produce-banner.png'}
-                        alt={prod.name}
-                        className="w-full h-full object-cover rounded-xl group-hover:scale-108 transition-transform duration-300"
+                    {/* Bespoke Vector Agro Item Icon Frame (NO AI IMAGES) */}
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-50 via-emerald-50/40 to-blue-50/50 border border-slate-200/80 flex items-center justify-center shrink-0 relative shadow-inner p-2 group-hover:scale-105 transition-transform duration-300">
+                      <ItemProduceIcon
+                        type={prod.iconType}
+                        category={prod.category}
+                        className="w-13 h-13 drop-shadow-xs"
                       />
                       <div className="absolute top-1 left-1">
-                        <span className="text-[8px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-md shadow-2xs uppercase">
+                        <span className="text-[8px] font-black bg-emerald-700 text-white px-1.5 py-0.5 rounded-md shadow-2xs uppercase">
                           JAM
                         </span>
                       </div>
@@ -982,12 +1029,17 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                     </div>
 
                     <div>
-                      <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-2 font-bold text-xs">
-                        {seller.stallNumber}
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-50 to-blue-50 border border-emerald-200/80 flex items-center justify-center mb-2 shadow-2xs p-1.5">
+                        <ItemProduceIcon category={seller.category} className="w-7 h-7" />
                       </div>
-                      <h4 className="text-xs font-extrabold text-slate-900 line-clamp-1">
-                        {seller.businessName}
-                      </h4>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black font-mono text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">
+                          {seller.stallNumber}
+                        </span>
+                        <h4 className="text-xs font-extrabold text-slate-900 line-clamp-1">
+                          {seller.businessName}
+                        </h4>
+                      </div>
                       <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">
                         {seller.category}
                       </p>

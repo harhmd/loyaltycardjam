@@ -117,7 +117,7 @@ export interface ReimbursementClaim {
 export interface ProductItem {
   id: string;
   name: string;
-  category: 'Ayam Segar' | 'Telur Ayam' | 'Buah Tempatan' | 'Sayur Kampung';
+  category: 'Ayam Segar' | 'Telur Ayam' | 'Buah Tempatan' | 'Sayur Kampung' | 'Beras & Keperluan Asas' | 'Ikan & Makanan Laut' | string;
   sellerId: string;
   sellerName: string;
   stallNumber: string;
@@ -125,7 +125,7 @@ export interface ProductItem {
   pointsNeeded: number; // 1 sen = 1 point
   originalPriceRM: number;
   badge: string;
-  iconType: 'CHICKEN' | 'EGGS' | 'FRUITS' | 'VEG';
+  iconType: 'CHICKEN' | 'EGGS' | 'FRUITS' | 'VEG' | 'RICE' | 'FISH';
   description: string;
   imageUrl?: string;
 }
