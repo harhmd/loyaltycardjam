@@ -15,7 +15,9 @@ import {
   ItemProduceIcon,
   EventTentPinIcon,
   AutoExpiryHourglassIcon,
+  NfcContactlessIcon,
 } from './AgroIcons';
+import { NfcReaderModal, NfcModalMode } from './NfcReaderModal';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import {
@@ -108,6 +110,8 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
   const [isMyIdModalOpen, setIsMyIdModalOpen] = useState(false);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [isBuyerQrModalOpen, setIsBuyerQrModalOpen] = useState(false);
+  const [isNfcModalOpen, setIsNfcModalOpen] = useState(false);
+  const [nfcMode, setNfcMode] = useState<NfcModalMode>('BUYER_TAP_MERCHANT');
 
   const parsedAmountRM = parseFloat(amountRM) || 0;
   const pointsNeeded = Math.round(parsedAmountRM * 100);
@@ -447,32 +451,50 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                 </div>
               </div>
 
-              {/* QR Code Plaque with Golden Border - Clickable for Fullscreen QR */}
-              <div
-                onClick={() => setIsBuyerQrModalOpen(true)}
-                title="Tekan untuk paparan QR penuh"
-                className={`bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border-2 shadow-lg shrink-0 cursor-pointer relative group transition hover:scale-105 ${
-                  isEventEnded ? 'border-rose-400' : 'border-amber-300'
-                }`}
-              >
-                <QRCodeSVG
-                  value={buyerQrPayload}
-                  size={42}
-                  bgColor="transparent"
-                  fgColor={isEventEnded ? '#991b1b' : '#0f172a'}
-                />
-                {isEventEnded && (
-                  <div className="absolute inset-0 bg-rose-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
-                    <Lock className="w-4 h-4 text-rose-300" />
+              {/* Right: Contactless NFC Tap & QR Code Plaques */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* NFC Contactless Tap Plaque */}
+                <div
+                  onClick={() => {
+                    setNfcMode('BUYER_TAP_MERCHANT');
+                    setIsNfcModalOpen(true);
+                  }}
+                  title="Sentuh Kad NFC (Tap-to-Pay / Imbas Gerai)"
+                  className="bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border-2 border-emerald-400 shadow-lg cursor-pointer relative group transition hover:scale-105 flex items-center justify-center text-emerald-800"
+                >
+                  <NfcContactlessIcon className="w-8 h-8 drop-shadow-xs" />
+                  <span className="absolute -bottom-1 -left-1 text-[7px] font-black bg-emerald-600 text-white px-1 py-0.2 rounded-full uppercase tracking-tighter shadow-2xs">
+                    NFC
+                  </span>
+                </div>
+
+                {/* QR Code Plaque with Golden Border - Clickable for Fullscreen QR */}
+                <div
+                  onClick={() => setIsBuyerQrModalOpen(true)}
+                  title="Tekan untuk paparan QR penuh"
+                  className={`bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border-2 shadow-lg shrink-0 cursor-pointer relative group transition hover:scale-105 ${
+                    isEventEnded ? 'border-rose-400' : 'border-amber-300'
+                  }`}
+                >
+                  <QRCodeSVG
+                    value={buyerQrPayload}
+                    size={38}
+                    bgColor="transparent"
+                    fgColor={isEventEnded ? '#991b1b' : '#0f172a'}
+                  />
+                  {isEventEnded && (
+                    <div className="absolute inset-0 bg-rose-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
+                      <Lock className="w-4 h-4 text-rose-300" />
+                    </div>
+                  )}
+                  {!hasClaimed && !isEventEnded && (
+                    <div className="absolute inset-0 bg-amber-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
+                      <Gift className="w-4 h-4 text-amber-300 animate-bounce" />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                    <Maximize2 className="w-2.5 h-2.5" />
                   </div>
-                )}
-                {!hasClaimed && !isEventEnded && (
-                  <div className="absolute inset-0 bg-amber-900/80 backdrop-blur-xs rounded-xl flex items-center justify-center text-white">
-                    <Gift className="w-4 h-4 text-amber-300 animate-bounce" />
-                  </div>
-                )}
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs">
-                  <Maximize2 className="w-2.5 h-2.5" />
                 </div>
               </div>
             </div>
@@ -675,8 +697,8 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
               <ChevronRight className="w-4 h-4 ml-auto text-amber-200" />
             </button>
           ) : (
-            /* Button 3: Double Action: Scan Stall QR or Show My QR */
-            <div className="grid grid-cols-2 gap-2">
+            /* Button 3: Triple Action: Scan Stall QR, Tap Web NFC, or Show My QR */
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => {
                   setPaymentError('');
@@ -686,22 +708,38 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
                   setIsScannerOpen(true);
                 }}
                 disabled={isEventEnded}
-                className={`py-3 px-3 rounded-full font-extrabold text-[11px] uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer ${
+                className={`py-3 px-2 rounded-full font-extrabold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1 shadow-md transition cursor-pointer ${
                   isEventEnded
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                     : 'btn-gradient-blue text-white shadow-blue-500/25 active:scale-[0.98]'
                 }`}
               >
-                <Scan className="w-4 h-4" />
-                <span>Imbas QR Gerai</span>
+                <Scan className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Imbas QR</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNfcMode('BUYER_TAP_MERCHANT');
+                  setIsNfcModalOpen(true);
+                }}
+                disabled={isEventEnded}
+                className={`py-3 px-2 rounded-full font-extrabold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1 shadow-md transition cursor-pointer ${
+                  isEventEnded
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-emerald-500/25 active:scale-[0.98]'
+                }`}
+              >
+                <NfcContactlessIcon className="w-3.5 h-3.5 shrink-0 text-white" />
+                <span className="truncate">Sentuh NFC</span>
               </button>
 
               <button
                 onClick={() => setIsBuyerQrModalOpen(true)}
-                className="py-3 px-3 bg-white hover:bg-slate-50 text-slate-800 border-2 border-blue-600/30 rounded-full font-extrabold text-[11px] uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition cursor-pointer"
+                className="py-3 px-2 bg-white hover:bg-slate-50 text-slate-800 border-2 border-blue-600/30 rounded-full font-extrabold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1 shadow-sm active:scale-[0.98] transition cursor-pointer"
               >
-                <QrCode className="w-4 h-4 text-blue-600" />
-                <span>Papar QR Saya</span>
+                <QrCode className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="truncate">Papar QR</span>
               </button>
             </div>
           )}
@@ -1311,30 +1349,41 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
               <div className="w-8"></div>
             </div>
 
-            {/* Mode Switcher Tabs (Camera vs Manual) */}
+            {/* Mode Switcher Tabs (Camera vs NFC vs Manual) */}
             <div className="px-5 pt-3">
-              <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+              <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-2xl text-[11px] font-bold">
                 <button
                   type="button"
                   onClick={() => setScannerMode('CAMERA')}
-                  className={`py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer ${
                     scannerMode === 'CAMERA'
                       ? 'btn-gradient-blue text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Scan className="w-4 h-4" /> Kamera Langsung
+                  <Scan className="w-3.5 h-3.5" /> Kamera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsScannerOpen(false);
+                    setNfcMode('BUYER_TAP_MERCHANT');
+                    setIsNfcModalOpen(true);
+                  }}
+                  className="py-2 px-1 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer text-emerald-700 hover:bg-emerald-50 font-black"
+                >
+                  <NfcContactlessIcon className="w-3.5 h-3.5 text-emerald-600" /> Sentuh NFC
                 </button>
                 <button
                   type="button"
                   onClick={() => setScannerMode('MANUAL')}
-                  className={`py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl transition flex items-center justify-center gap-1 cursor-pointer ${
                     scannerMode === 'MANUAL'
                       ? 'btn-gradient-blue text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Store className="w-4 h-4" /> Pilih Gerai Manual
+                  <Store className="w-3.5 h-3.5" /> Manual
                 </button>
               </div>
             </div>
@@ -1544,6 +1593,31 @@ export const BuyerPortal: React.FC<BuyerPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* 9. WEB NFC READER MODAL */}
+      <NfcReaderModal
+        isOpen={isNfcModalOpen}
+        onClose={() => setIsNfcModalOpen(false)}
+        mode={nfcMode}
+        currentMember={currentMember}
+        allMembers={allMembers}
+        allSellers={sellers}
+        events={events}
+        onSelectStallFromNfc={(stall) => {
+          setSelectedSellerId(stall.id);
+          setCameraScanSuccessMsg(`Gerai Dikesan Melalui Web NFC: ${stall.businessName} (${stall.stallNumber})`);
+          setScannerMode('MANUAL');
+          setIsScannerOpen(true);
+        }}
+        onPaymentSuccess={(res) => {
+          onMakePayment(
+            res.member.id,
+            res.seller.id,
+            res.amountRM,
+            `Bayaran Sentuh NFC (${res.seller.businessName})`
+          );
+        }}
+      />
 
     </div>
   );

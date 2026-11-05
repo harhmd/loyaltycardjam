@@ -14,7 +14,9 @@ import {
   QuotaMeterIcon,
   EventTentPinIcon,
   AutoExpiryHourglassIcon,
+  NfcContactlessIcon,
 } from './AgroIcons';
+import { NfcReaderModal } from './NfcReaderModal';
 import {
   LayoutGrid,
   ShoppingBag,
@@ -101,6 +103,7 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
   const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
   const [isClaimsModalOpen, setIsClaimsModalOpen] = useState(false);
+  const [isNfcStationOpen, setIsNfcStationOpen] = useState(false);
   
   // Selected claim for receipt & anti-fraud audit inspection modal
   const [selectedClaimForAudit, setSelectedClaimForAudit] = useState<ReimbursementClaim | null>(null);
@@ -415,6 +418,20 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               <MessageSquare className="w-4 h-4 text-slate-400" />
               <span>Messages (Audit)</span>
             </button>
+
+            {/* Item 6: Web NFC Stesen Kad */}
+            <button
+              onClick={() => setIsNfcStationOpen(true)}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <NfcContactlessIcon className="w-4 h-4 text-emerald-600" />
+                <span>Stesen Kad NFC</span>
+              </div>
+              <span className="text-[8px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full">
+                NFC
+              </span>
+            </button>
           </div>
 
           {/* Nav Section: HELP & SETTINGS */}
@@ -548,6 +565,14 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
               >
                 <Store className="w-3.5 h-3.5 text-blue-600" />
                 <span>Standee Gerai (Peniaga)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsNfcStationOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300/80 transition cursor-pointer flex items-center gap-1.5 font-bold shadow-2xs"
+              >
+                <NfcContactlessIcon className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Stesen Kad NFC JAM</span>
               </button>
             </div>
           )}
@@ -1855,6 +1880,16 @@ export const OwnerPortal: React.FC<OwnerPortalProps> = ({
           </div>
         );
       })()}
+
+      {/* Web NFC Card Issuance & Diagnostics Modal */}
+      <NfcReaderModal
+        isOpen={isNfcStationOpen}
+        onClose={() => setIsNfcStationOpen(false)}
+        mode="DIAGNOSTICS_AND_WRITE"
+        allMembers={members}
+        allSellers={sellers}
+        events={events}
+      />
 
     </div>
   );

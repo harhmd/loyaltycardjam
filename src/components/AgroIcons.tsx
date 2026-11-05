@@ -636,3 +636,80 @@ export const ItemProduceIcon: React.FC<{
   return <PasarStallIcon className={className} size={size} />;
 };
 
+// 12. WEB NFC CONTACTLESS TAP ICON (Agro MADANI 4-Wave Radio Signal & Smart Chip)
+export const NfcContactlessIcon: React.FC<IconProps> = ({ className = 'w-6 h-6', size }) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    style={size ? { width: size, height: size } : undefined}
+  >
+    <defs>
+      <linearGradient id="nfcWaveGrad" x1="12" y1="8" x2="42" y2="38" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#10b981" />
+        <stop offset="0.5" stopColor="#06b6d4" />
+        <stop offset="1" stopColor="#3b82f6" />
+      </linearGradient>
+      <linearGradient id="nfcCardGrad" x1="4" y1="12" x2="26" y2="40" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#064e3b" />
+        <stop offset="1" stopColor="#0f172a" />
+      </linearGradient>
+    </defs>
+
+    {/* Smart Card Base */}
+    <rect
+      x="4"
+      y="12"
+      width="22"
+      height="28"
+      rx="4"
+      fill="url(#nfcCardGrad)"
+      stroke="#10b981"
+      strokeWidth="1.6"
+    />
+    
+    {/* Microchip */}
+    <rect x="7" y="16" width="6" height="5" rx="1" fill="#f59e0b" stroke="#fef08a" strokeWidth="0.8" />
+    <line x1="10" y1="16" x2="10" y2="21" stroke="#b45309" strokeWidth="0.6" />
+    <line x1="7" y1="18.5" x2="13" y2="18.5" stroke="#b45309" strokeWidth="0.6" />
+
+    {/* Card Decorative lines */}
+    <line x1="7" y1="26" x2="22" y2="26" stroke="#34d399" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+    <line x1="7" y1="30" x2="18" y2="30" stroke="#34d399" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+    <circle cx="20" cy="34" r="2" fill="#fbbf24" />
+
+    {/* 4 Radiating Contactless Radio Waves */}
+    {/* Wave 1 (Inner) */}
+    <path
+      d="M27 21C28.8 22.8 28.8 25.8 27 27.6"
+      stroke="url(#nfcWaveGrad)"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+    />
+    {/* Wave 2 */}
+    <path
+      d="M31 17C34.8 20.8 34.8 27.2 31 31"
+      stroke="url(#nfcWaveGrad)"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+    />
+    {/* Wave 3 */}
+    <path
+      d="M35.5 13C41 18.5 41 29 35.5 34.5"
+      stroke="url(#nfcWaveGrad)"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+    />
+    {/* Wave 4 (Outer) */}
+    <path
+      d="M40 9C47.2 16.2 47.2 31.8 40 39"
+      stroke="url(#nfcWaveGrad)"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      opacity="0.85"
+    />
+  </svg>
+);
+
+

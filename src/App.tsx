@@ -1106,10 +1106,13 @@ export const App: React.FC = () => {
             <SellerPortal
               currentSeller={currentSeller}
               allSellers={sellers}
+              allMembers={members}
+              events={events}
               onSelectSeller={setCurrentSellerId}
               transactions={transactions}
               claims={claims}
               onSubmitClaim={handleSubmitClaim}
+              onMakePayment={handleMakePayment}
             />
           )}
 

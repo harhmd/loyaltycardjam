@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Seller, Transaction, ReimbursementClaim } from '../types';
+import { Seller, Transaction, ReimbursementClaim, Member, EventLocation } from '../types';
 import { QRCodeSVG } from 'qrcode.react';
 import { generateJamReceiptImage } from '../utils/auditUtils';
-import { ItemProduceIcon, PasarStallIcon } from './AgroIcons';
+import { ItemProduceIcon, PasarStallIcon, NfcContactlessIcon } from './AgroIcons';
+import { NfcReaderModal } from './NfcReaderModal';
 import {
   Store,
   QrCode,
@@ -30,6 +31,8 @@ import {
 interface SellerPortalProps {
   currentSeller: Seller;
   allSellers: Seller[];
+  allMembers?: Member[];
+  events?: EventLocation[];
   onSelectSeller: (sellerId: string) => void;
   transactions: Transaction[];
   claims: ReimbursementClaim[];
@@ -45,18 +48,28 @@ interface SellerPortalProps {
       accountHolderName?: string;
     }
   ) => void;
+  onMakePayment?: (
+    memberId: string,
+    sellerId: string,
+    amountRM: number,
+    note: string
+  ) => { success: boolean; message?: string };
 }
 
 export const SellerPortal: React.FC<SellerPortalProps> = ({
   currentSeller,
   allSellers,
+  allMembers = [],
+  events = [],
   onSelectSeller,
   transactions,
   claims,
   onSubmitClaim,
+  onMakePayment,
 }) => {
   const [viewMode, setViewMode] = useState<'DASHBOARD' | 'STANDEE'>('STANDEE');
   const [claimSuccessMsg, setClaimSuccessMsg] = useState('');
+  const [isNfcModalOpen, setIsNfcModalOpen] = useState(false);
   
   // Claim submission modal state
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
@@ -215,6 +228,15 @@ export const SellerPortal: React.FC<SellerPortalProps> = ({
             ))}
           </select>
 
+          {/* Web NFC Tap to Pay Button */}
+          <button
+            type="button"
+            onClick={() => setIsNfcModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2.5 rounded-full flex items-center gap-1.5 shadow-md hover:shadow-lg transition cursor-pointer"
+          >
+            <NfcContactlessIcon className="w-4 h-4" /> Sentuh Kad NFC
+          </button>
+
           {/* Toggle View Mode */}
           <button
             onClick={() =>
@@ -292,6 +314,29 @@ export const SellerPortal: React.FC<SellerPortalProps> = ({
             <p className="text-[11px] text-blue-100">
               Mata ditolak secara automatik daripada baki pembeli (100 Mata = RM 1.00).
             </p>
+          </div>
+
+          {/* Web NFC Tap-to-Pay Quick Callout */}
+          <div
+            onClick={() => setIsNfcModalOpen(true)}
+            className="max-w-md mx-auto mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600/40 to-teal-700/40 hover:from-emerald-600/60 hover:to-teal-700/60 backdrop-blur-md border border-emerald-300/40 text-left flex items-center justify-between gap-3 transition cursor-pointer shadow-lg group"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center p-1.5 shrink-0 group-hover:scale-105 transition-transform">
+                <NfcContactlessIcon className="w-7 h-7 text-white drop-shadow" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-emerald-300 tracking-wider block">
+                  Web NFC Tap-to-Pay
+                </span>
+                <p className="text-xs font-black text-white">
+                  Sentuh Kad Fizikal Ahli di Sini
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-extrabold bg-white text-emerald-900 px-3 py-1.5 rounded-xl shadow-xs group-hover:bg-emerald-50 shrink-0">
+              Sentuh Kad →
+            </span>
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-blue-100">
@@ -762,6 +807,27 @@ export const SellerPortal: React.FC<SellerPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* Web NFC Tap-to-Pay Modal */}
+      <NfcReaderModal
+        isOpen={isNfcModalOpen}
+        onClose={() => setIsNfcModalOpen(false)}
+        mode="SELLER_TAP_TO_PAY"
+        currentSeller={currentSeller}
+        allMembers={allMembers}
+        allSellers={allSellers}
+        events={events}
+        onPaymentSuccess={(res) => {
+          if (onMakePayment) {
+            onMakePayment(
+              res.member.id,
+              res.seller.id,
+              res.amountRM,
+              `Bayaran Kad NFC (${res.member.name})`
+            );
+          }
+        }}
+      />
 
     </div>
   );

@@ -117,10 +117,13 @@ export const SplitView: React.FC<SplitViewProps> = (props) => {
           <SellerPortal
             currentSeller={props.currentSeller}
             allSellers={props.allSellers}
+            allMembers={props.allMembers}
+            events={props.events}
             onSelectSeller={props.onSelectSeller}
             transactions={props.transactions}
             claims={props.claims}
             onSubmitClaim={props.onSubmitClaim}
+            onMakePayment={props.onMakePayment}
           />
         </div>
       </div>
